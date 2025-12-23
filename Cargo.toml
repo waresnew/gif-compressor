@@ -1,0 +1,8 @@
+[package]
+name = "gif-compressor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+gif = "0.14.1"
+image = "0.25.9"

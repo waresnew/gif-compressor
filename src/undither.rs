@@ -1,16 +1,12 @@
-use crate::image::{GifFrame, Palette, RGB};
+use crate::image::{GifFrame, RGB};
 
 /// returns unpaletted 2d vec of RGBA's
-pub fn undither(frame: &GifFrame, palette: &Palette) -> Vec<Vec<RGB>> {
-    let mut ans = vec![vec![RGB::default(); frame.width]; frame.height];
-    for i in 0..frame.height {
-        for j in 0..frame.width {
-            let cur = frame.indices[i][j];
-            if let Some(transparent) = frame.transparent
-                && cur == transparent
-            {
-                continue;
-            }
+pub fn undither(frame: &GifFrame) -> Vec<Vec<RGB>> {
+    let palette = frame.get_palette();
+    let mut ans = vec![vec![RGB::default(); frame.canvas_width()]; frame.canvas_height()];
+    for i in 0..frame.canvas_height() {
+        for j in 0..frame.canvas_width() {
+            let cur = frame.canvas[i][j];
             let mut weight_len = 0;
             let mut sum_r = 0;
             let mut sum_g = 0;
@@ -21,20 +17,14 @@ pub fn undither(frame: &GifFrame, palette: &Palette) -> Vec<Vec<RGB>> {
                     if di == 0 && dj == 0 {
                         continue;
                     }
-                    let ni = (i as isize + di).clamp(0, frame.height as isize - 1) as usize;
-                    let nj = (j as isize + dj).clamp(0, frame.width as isize - 1) as usize;
-                    let neighbour = frame.indices[ni][nj];
-                    prewitt_input[(di + 1) as usize][(dj + 1) as usize] =
-                        palette[neighbour].as_luminance();
-                    if let Some(transparent) = frame.transparent
-                        && neighbour == transparent
-                    {
-                        continue;
-                    }
-                    let avg = palette[cur].average(&palette[neighbour]);
+                    let ni =
+                        (i as isize + di).clamp(0, frame.canvas_height() as isize - 1) as usize;
+                    let nj = (j as isize + dj).clamp(0, frame.canvas_width() as isize - 1) as usize;
+                    let neighbour = frame.canvas[ni][nj];
+                    let avg = cur.average(&neighbour);
                     //OPTIMIZE: precompute
-                    let nearest = palette.nearest(&avg, cur, neighbour);
-                    let dis1 = palette[cur].distance_sq(&avg);
+                    let nearest = palette.nearest(&avg, &cur, &neighbour);
+                    let dis1 = cur.distance_sq(&avg);
                     let dis2 = avg.distance_sq(nearest);
                     let weight = if dis2 >= dis1 * 2 {
                         8
@@ -45,10 +35,11 @@ pub fn undither(frame: &GifFrame, palette: &Palette) -> Vec<Vec<RGB>> {
                     } else {
                         0
                     } as u32;
-                    sum_r += weight * (palette[neighbour].r as u32);
-                    sum_g += weight * (palette[neighbour].g as u32);
-                    sum_b += weight * (palette[neighbour].b as u32);
+                    sum_r += weight * (neighbour.r as u32);
+                    sum_g += weight * (neighbour.g as u32);
+                    sum_b += weight * (neighbour.b as u32);
                     weight_len += weight;
+                    prewitt_input[(di + 1) as usize][(dj + 1) as usize] = neighbour.as_luminance();
                 }
             }
             //OPTIMIZE:precompute
@@ -56,7 +47,7 @@ pub fn undither(frame: &GifFrame, palette: &Palette) -> Vec<Vec<RGB>> {
             let prewitt_high_threshold = 256;
             let prewitt_low_threshold = 160;
             let cur_weight = if prewitt > prewitt_high_threshold {
-                ans[i][j] = palette[cur];
+                ans[i][j] = cur;
                 continue;
             } else if prewitt > prewitt_low_threshold {
                 24
@@ -64,9 +55,9 @@ pub fn undither(frame: &GifFrame, palette: &Palette) -> Vec<Vec<RGB>> {
                 8
             };
             weight_len += cur_weight;
-            sum_r += cur_weight * (palette[cur].r as u32);
-            sum_b += cur_weight * (palette[cur].b as u32);
-            sum_g += cur_weight * (palette[cur].g as u32);
+            sum_r += cur_weight * (cur.r as u32);
+            sum_b += cur_weight * (cur.b as u32);
+            sum_g += cur_weight * (cur.g as u32);
             ans[i][j] = RGB {
                 r: (sum_r / weight_len) as u8,
                 g: (sum_g / weight_len) as u8,
@@ -74,8 +65,8 @@ pub fn undither(frame: &GifFrame, palette: &Palette) -> Vec<Vec<RGB>> {
             };
         }
     }
-    assert_eq!(ans.len(), frame.height);
-    assert_eq!(ans[0].len(), frame.width);
+    assert_eq!(ans.len(), frame.canvas_height());
+    assert_eq!(ans[0].len(), frame.canvas_width());
     ans
 }
 /// returns centre value only

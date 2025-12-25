@@ -1,8 +1,6 @@
 use crate::image::{GifFrame, RGB};
 
-/// returns unpaletted 2d vec of RGBA's
-pub fn undither(frame: &GifFrame) -> Vec<Vec<RGB>> {
-    let palette = frame.get_palette();
+pub fn undither(frame: &mut GifFrame) -> Vec<Vec<RGB>> {
     let mut ans = vec![vec![RGB::default(); frame.canvas_width()]; frame.canvas_height()];
     for i in 0..frame.canvas_height() {
         for j in 0..frame.canvas_width() {
@@ -21,10 +19,10 @@ pub fn undither(frame: &GifFrame) -> Vec<Vec<RGB>> {
                         (i as isize + di).clamp(0, frame.canvas_height() as isize - 1) as usize;
                     let nj = (j as isize + dj).clamp(0, frame.canvas_width() as isize - 1) as usize;
                     let neighbour = frame.canvas[ni][nj];
-                    let avg = cur.average(&neighbour);
-                    //OPTIMIZE: precompute
-                    let nearest = palette.nearest(&avg, &cur, &neighbour);
-                    let dis1 = cur.distance_sq(&avg);
+                    let avg = cur.average(neighbour);
+                    let palette = frame.get_palette_mut();
+                    let nearest = palette.get_nearest(avg, cur, neighbour);
+                    let dis1 = cur.distance_sq(avg);
                     let dis2 = avg.distance_sq(nearest);
                     let weight = if dis2 >= dis1 * 2 {
                         8
@@ -42,7 +40,6 @@ pub fn undither(frame: &GifFrame) -> Vec<Vec<RGB>> {
                     prewitt_input[(di + 1) as usize][(dj + 1) as usize] = neighbour.as_luminance();
                 }
             }
-            //OPTIMIZE:precompute
             let prewitt = prewitt_3x3_mag(prewitt_input);
             let prewitt_high_threshold = 256;
             let prewitt_low_threshold = 160;

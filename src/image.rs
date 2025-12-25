@@ -1,22 +1,37 @@
-use std::ops::Index;
+use std::collections::HashMap;
 
 use gif::Frame;
 
-#[derive(Debug, PartialEq, Default, Clone, Copy)]
+use crate::kdtree::{KdTree, Point};
+
+#[derive(Debug, Eq, PartialOrd, Ord, PartialEq, Default, Clone, Copy, Hash)]
 pub struct RGB {
     pub r: u8,
     pub g: u8,
     pub b: u8,
 }
+impl Point<3> for RGB {
+    fn get(&self, dim: usize) -> i32 {
+        if dim == 0 {
+            self.r as i32
+        } else if dim == 1 {
+            self.g as i32
+        } else if dim == 2 {
+            self.b as i32
+        } else {
+            panic!("RGB Point get() given dim=={}", dim);
+        }
+    }
+}
 impl RGB {
-    pub fn average(&self, other: &RGB) -> RGB {
+    pub fn average(&self, other: RGB) -> RGB {
         RGB {
             r: ((self.r as u16 + other.r as u16) / 2) as u8,
             g: ((self.g as u16 + other.g as u16) / 2) as u8,
             b: ((self.b as u16 + other.b as u16) / 2) as u8,
         }
     }
-    pub fn distance_sq(&self, other: &RGB) -> u32 {
+    pub fn distance_sq(&self, other: RGB) -> u32 {
         let dr = self.r as i32 - other.r as i32;
         let dg = self.g as i32 - other.g as i32;
         let db = self.b as i32 - other.b as i32;
@@ -27,54 +42,69 @@ impl RGB {
         (0.299 * self.r as f32 + 0.587 * self.g as f32 + 0.114 * self.b as f32) as u8
     }
 }
+fn parse_raw_palette(palette_raw: &[u8]) -> Vec<RGB> {
+    palette_raw
+        .chunks_exact(3)
+        .map(|c| RGB {
+            r: c[0],
+            g: c[1],
+            b: c[2],
+        })
+        .collect()
+}
 #[derive(Debug)]
 pub struct Palette {
-    palette: Vec<RGB>,
+    pub bg: Option<RGB>,
+    cache: HashMap<RGB, [RGB; 3]>,
+    kdtree: KdTree<RGB, 3>,
 }
 impl Palette {
-    pub fn from_raw(palette_raw: &[u8]) -> Self {
-        Palette {
-            palette: palette_raw
-                .chunks_exact(3)
-                .map(|c| RGB {
-                    r: c[0],
-                    g: c[1],
-                    b: c[2],
-                })
-                .collect(),
+    pub fn new(palette_raw: &[u8], bg_index: Option<usize>) -> Self {
+        let palette = parse_raw_palette(palette_raw);
+        let bg = bg_index.map(|i| palette[i]);
+        Self {
+            cache: HashMap::new(),
+            kdtree: KdTree::new(palette),
+            bg,
         }
     }
-    pub fn new(palette: Vec<RGB>) -> Self {
-        Palette { palette }
-    }
-    pub fn nearest(&self, target: &RGB, exclude1: &RGB, exclude2: &RGB) -> &RGB {
-        //OPTIMIZE:brute force
-        let mut ans = &self.palette[0];
-        let mut best_dis = 1000000;
-        for c in &self.palette {
-            if c == exclude1 || c == exclude2 {
-                continue;
+    pub fn get_nearest(&mut self, target: RGB, exclude1: RGB, exclude2: RGB) -> RGB {
+        let (r, g, b) = (target.r as usize, target.g as usize, target.b as usize);
+        let calc_nearest = || {
+            let heap = self.kdtree.k_nn(
+                RGB {
+                    r: r as u8,
+                    g: g as u8,
+                    b: b as u8,
+                },
+                3,
+            );
+            let mut res: Vec<RGB> = heap.into_sorted_vec().iter().map(|x| x.second).collect();
+            res.resize(3, res[0]); //pad with itself so it won't undither at all if <3 colour palette
+            res
+        };
+        self.cache.entry(target).or_insert_with(|| {
+            calc_nearest()
+                .try_into()
+                .expect("Knn result was not size 3")
+        });
+        let [res1, res2, res3] = self.cache[&target];
+        if res1 == exclude1 || res1 == exclude2 {
+            if res2 == exclude1 || res2 == exclude2 {
+                res3
+            } else {
+                res2
             }
-            let dis = c.distance_sq(target);
-            if dis < best_dis {
-                ans = c;
-                best_dis = dis;
-            }
+        } else {
+            res1
         }
-        ans
     }
 }
-impl Index<u8> for Palette {
-    type Output = RGB;
 
-    fn index(&self, index: u8) -> &Self::Output {
-        &self.palette[(index as usize).clamp(0, self.palette.len() - 1)]
-    }
-}
 ///fully composited gif frame
 pub struct GifFrame<'a> {
     pub canvas: &'a mut Vec<Vec<RGB>>,
-    global_palette: Option<&'a Palette>,
+    global_palette: Option<&'a mut Palette>,
     local_palette: Option<Palette>,
 }
 impl<'a> GifFrame<'a> {
@@ -84,11 +114,10 @@ impl<'a> GifFrame<'a> {
     pub fn canvas_height(&self) -> usize {
         self.canvas.len()
     }
-    /// draws `frame` onto `canvas`
-    pub fn render_to_canvas(
+    pub fn render_frame_to_canvas(
         frame: &Frame,
         canvas: &'a mut Vec<Vec<RGB>>,
-        global_palette: Option<&'a Palette>,
+        global_palette: Option<&'a mut Palette>,
     ) -> Self {
         let pixels_raw: Vec<Vec<(u8, u8, u8, u8)>> = frame
             .buffer
@@ -99,8 +128,6 @@ impl<'a> GifFrame<'a> {
             .map(|c| c.to_vec())
             .collect();
         let (top, left) = (frame.top as usize, frame.left as usize);
-        dbg!(top);
-        dbg!(left);
         let (height, width) = (frame.height as usize, frame.width as usize);
         for i in 0..height {
             for j in 0..width {
@@ -114,14 +141,20 @@ impl<'a> GifFrame<'a> {
 
         Self {
             global_palette,
-            local_palette: frame.palette.as_ref().map(|local| Palette::from_raw(local)),
+            local_palette: frame
+                .palette
+                .as_ref()
+                .map(|local| Palette::new(local, None)),
             canvas,
         }
     }
-    pub fn get_palette(&self) -> &Palette {
-        self.local_palette
-            .as_ref()
-            .or(self.global_palette)
-            .expect("malformed gif: no global or local palette")
+    pub fn get_palette_mut(&mut self) -> &mut Palette {
+        if let Some(local) = &mut self.local_palette {
+            local
+        } else if let Some(global) = self.global_palette.as_mut() {
+            global
+        } else {
+            panic!("malformed gif: no global or local palette");
+        }
     }
 }

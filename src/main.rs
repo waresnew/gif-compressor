@@ -14,7 +14,7 @@ fn main() {
     if decoder.width() == 0 || decoder.height() == 0 {
         panic!("malformed gif: width or height is 0");
     }
-    let mut global_palette = decoder
+    let global_palette = decoder
         .global_palette()
         .map(|x| Palette::new(x, decoder.bg_color()));
     let bg = global_palette
@@ -25,7 +25,7 @@ fn main() {
     let mut iter = decoder.into_iter().enumerate();
     while let Some((i, Ok(frame_raw))) = iter.next() {
         let mut frame =
-            GifFrame::render_frame_to_canvas(&frame_raw, &mut canvas, global_palette.as_mut());
+            GifFrame::render_frame_to_canvas(&frame_raw, &mut canvas, global_palette.as_ref());
         let res = undither(&mut frame);
         export_png(&res, i);
         for i in 0..canvas.len() {

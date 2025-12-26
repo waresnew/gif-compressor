@@ -1,5 +1,3 @@
-use std::{cell::RefCell, collections::HashMap};
-
 use gif::Frame;
 
 use crate::kdtree::{KdTree, Point};
@@ -37,7 +35,13 @@ impl RGB {
         let db = self.b as i32 - other.b as i32;
         (dr * dr + db * db + dg * dg) as u32
     }
-    pub fn as_luminance(&self) -> u8 {
+    pub fn distance_luma_sq(&self, other: RGB) -> u32 {
+        let dr = self.r as f32 - other.r as f32;
+        let dg = self.g as f32 - other.g as f32;
+        let db = self.b as f32 - other.b as f32;
+        (0.299 * dr * dr + 0.587 * dg * dg + 0.114 * db * db) as u32
+    }
+    pub fn as_luma(&self) -> u8 {
         //Y component in YCbCr
         (0.299 * self.r as f32 + 0.587 * self.g as f32 + 0.114 * self.b as f32) as u8
     }
@@ -45,7 +49,6 @@ impl RGB {
 #[derive(Debug)]
 pub struct Palette {
     pub bg: Option<RGB>,
-    cache: RefCell<HashMap<RGB, [RGB; 3]>>,
     kdtree: KdTree<RGB, 3>,
 }
 impl Palette {
@@ -65,32 +68,13 @@ impl Palette {
         palette.dedup();
         let bg = bg_index.map(|i| palette[i]);
         Self {
-            cache: RefCell::new(HashMap::new()),
             kdtree: KdTree::new(palette),
             bg,
         }
     }
     pub fn get_nearest(&self, target: RGB, exclude1: RGB, exclude2: RGB) -> RGB {
-        let (r, g, b) = (target.r as usize, target.g as usize, target.b as usize);
-        let calc_nearest = || {
-            let heap = self.kdtree.k_nn(
-                RGB {
-                    r: r as u8,
-                    g: g as u8,
-                    b: b as u8,
-                },
-                3,
-            );
-            let mut res: Vec<RGB> = heap.into_sorted_vec().iter().map(|x| x.second).collect();
-            res.resize(3, res[0]); //pad with itself so it won't undither at all if <3 colour palette
-            res
-        };
-        self.cache.borrow_mut().entry(target).or_insert_with(|| {
-            calc_nearest()
-                .try_into()
-                .expect("Knn result was not size 3")
-        });
-        let [res1, res2, res3] = self.cache.borrow()[&target];
+        let [res1, res2, res3]: [RGB; 3] =
+            self.kdtree.k_nn(target, 3).as_slice().try_into().unwrap();
         if res1 == exclude1 || res1 == exclude2 {
             if res2 == exclude1 || res2 == exclude2 {
                 res3

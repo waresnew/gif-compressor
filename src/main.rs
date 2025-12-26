@@ -1,4 +1,4 @@
-use gif::DisposalMethod;
+use gif::{DisposalMethod, Encoder};
 use gif_compressor::image::{GifFrame, Palette, RGB};
 use gif_compressor::undither::undither;
 use std::env;
@@ -9,6 +9,7 @@ fn main() {
     let mut decoder = gif::DecodeOptions::new();
     decoder.set_color_output(gif::ColorOutput::RGBA);
     let file = File::open(&args[1]).unwrap();
+    let transparency_threshold: u32 = args[2].parse().unwrap();
     let decoder = decoder.read_info(file).unwrap();
     let start = Instant::now();
     if decoder.width() == 0 || decoder.height() == 0 {
@@ -27,6 +28,7 @@ fn main() {
         let mut frame =
             GifFrame::render_frame_to_canvas(&frame_raw, &mut canvas, global_palette.as_ref());
         let res = undither(&mut frame);
+        fuzzy_transparency(&mut frame, &prev_canvas, transparency_threshold);
         export_png(&res, i);
         for i in 0..canvas.len() {
             for j in 0..canvas[0].len() {
@@ -41,6 +43,20 @@ fn main() {
     }
     println!("took {:?}", start.elapsed());
 }
+fn fuzzy_transparency(frame: &mut GifFrame, prev_canvas: &[Vec<RGB>], threshold: u32) {
+    let height = frame.canvas_height();
+    let width = frame.canvas_width();
+    for i in 0..height {
+        for j in 0..width {
+            let cur = frame.canvas[i][j];
+            let prev = prev_canvas[i][j];
+            if cur.distance_luma_sq(prev) <= threshold * threshold {
+                frame.canvas[i][j] = prev;
+            }
+        }
+    }
+}
+fn median_cut(frame: &mut GifFrame) {}
 fn export_png(res: &[Vec<RGB>], i: usize) {
     //TODO: i'm only using image-rs crate to export to png for the undither test
     let mut img_buffer = image::ImageBuffer::new(res[0].len() as u32, res.len() as u32);

@@ -29,7 +29,7 @@ pub fn undither(frame: &mut GifFrame) -> Vec<Vec<RGB>> {
                 }
             };
             for_each_neighbour(&mut |(di, dj), neighbour| {
-                prewitt_input[(di + 1) as usize][(dj + 1) as usize] = neighbour.as_luminance();
+                prewitt_input[(di + 1) as usize][(dj + 1) as usize] = neighbour.as_luma();
             });
             let prewitt = prewitt_3x3_mag(prewitt_input);
             let prewitt_high_threshold = 256;

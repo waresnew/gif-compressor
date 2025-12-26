@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap};
 
 use gif::Frame;
 
@@ -42,33 +42,35 @@ impl RGB {
         (0.299 * self.r as f32 + 0.587 * self.g as f32 + 0.114 * self.b as f32) as u8
     }
 }
-fn parse_raw_palette(palette_raw: &[u8]) -> Vec<RGB> {
-    palette_raw
-        .chunks_exact(3)
-        .map(|c| RGB {
-            r: c[0],
-            g: c[1],
-            b: c[2],
-        })
-        .collect()
-}
 #[derive(Debug)]
 pub struct Palette {
     pub bg: Option<RGB>,
-    cache: HashMap<RGB, [RGB; 3]>,
+    cache: RefCell<HashMap<RGB, [RGB; 3]>>,
     kdtree: KdTree<RGB, 3>,
 }
 impl Palette {
+    fn parse_raw_palette(palette_raw: &[u8]) -> Vec<RGB> {
+        palette_raw
+            .chunks_exact(3)
+            .map(|c| RGB {
+                r: c[0],
+                g: c[1],
+                b: c[2],
+            })
+            .collect()
+    }
     pub fn new(palette_raw: &[u8], bg_index: Option<usize>) -> Self {
-        let palette = parse_raw_palette(palette_raw);
+        let mut palette = Self::parse_raw_palette(palette_raw);
+        palette.sort();
+        palette.dedup();
         let bg = bg_index.map(|i| palette[i]);
         Self {
-            cache: HashMap::new(),
+            cache: RefCell::new(HashMap::new()),
             kdtree: KdTree::new(palette),
             bg,
         }
     }
-    pub fn get_nearest(&mut self, target: RGB, exclude1: RGB, exclude2: RGB) -> RGB {
+    pub fn get_nearest(&self, target: RGB, exclude1: RGB, exclude2: RGB) -> RGB {
         let (r, g, b) = (target.r as usize, target.g as usize, target.b as usize);
         let calc_nearest = || {
             let heap = self.kdtree.k_nn(
@@ -83,12 +85,12 @@ impl Palette {
             res.resize(3, res[0]); //pad with itself so it won't undither at all if <3 colour palette
             res
         };
-        self.cache.entry(target).or_insert_with(|| {
+        self.cache.borrow_mut().entry(target).or_insert_with(|| {
             calc_nearest()
                 .try_into()
                 .expect("Knn result was not size 3")
         });
-        let [res1, res2, res3] = self.cache[&target];
+        let [res1, res2, res3] = self.cache.borrow()[&target];
         if res1 == exclude1 || res1 == exclude2 {
             if res2 == exclude1 || res2 == exclude2 {
                 res3
@@ -104,7 +106,7 @@ impl Palette {
 ///fully composited gif frame
 pub struct GifFrame<'a> {
     pub canvas: &'a mut Vec<Vec<RGB>>,
-    global_palette: Option<&'a mut Palette>,
+    global_palette: Option<&'a Palette>,
     local_palette: Option<Palette>,
 }
 impl<'a> GifFrame<'a> {
@@ -117,7 +119,7 @@ impl<'a> GifFrame<'a> {
     pub fn render_frame_to_canvas(
         frame: &Frame,
         canvas: &'a mut Vec<Vec<RGB>>,
-        global_palette: Option<&'a mut Palette>,
+        global_palette: Option<&'a Palette>,
     ) -> Self {
         let pixels_raw: Vec<Vec<(u8, u8, u8, u8)>> = frame
             .buffer
@@ -148,10 +150,10 @@ impl<'a> GifFrame<'a> {
             canvas,
         }
     }
-    pub fn get_palette_mut(&mut self) -> &mut Palette {
-        if let Some(local) = &mut self.local_palette {
+    pub fn get_palette(&self) -> &Palette {
+        if let Some(local) = &self.local_palette {
             local
-        } else if let Some(global) = self.global_palette.as_mut() {
+        } else if let Some(global) = self.global_palette {
             global
         } else {
             panic!("malformed gif: no global or local palette");

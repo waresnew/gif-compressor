@@ -20,7 +20,7 @@ pub trait Point<const K: usize> {
         ans as usize
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct Node<T: Copy> {
     val: T,
     left: MaybeNode<T>,
@@ -56,7 +56,7 @@ impl<X: Ord + Eq, Y> PartialEq for PairFirstOnly<X, Y> {
     }
 }
 impl<X: Ord + Eq, Y> Eq for PairFirstOnly<X, Y> {}
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 ///dynamic insert/delete not implemented
 pub struct KdTree<T: Copy, const K: usize> {
     root: MaybeNode<T>,

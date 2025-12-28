@@ -97,8 +97,8 @@ fn read_and_process_gif<F>(
     args: &[String],
     mut on_frame_processed: F,
     global_palette_cached: Option<Palette>,
-    local_palette_cache: Vec<Palette>,
-) -> (Option<Palette>, Vec<Palette>)
+    local_palettes_cached: Vec<Option<Palette>>,
+) -> (Option<Palette>, Vec<Option<Palette>>)
 where
     F: FnMut(&mut GifFrame, &Vec<Vec<RGB>>),
 {
@@ -117,21 +117,27 @@ where
     let mut canvas =
         vec![vec![RGB::transparent(); decoder.width() as usize]; decoder.height() as usize]; //reused
     let mut prev_canvas = canvas.clone();
-    let mut iter = decoder.into_iter();
+    let mut decoder_iter = decoder.into_iter();
     let mut local_palettes = Vec::new();
-    let mut local_palette_cache_iter = local_palette_cache.into_iter();
-    while let Some(Ok(frame_raw)) = iter.next() {
+    let mut local_palette_cache_iter = if !local_palettes_cached.is_empty() {
+        Some(local_palettes_cached.into_iter())
+    } else {
+        None
+    };
+    while let Some(Ok(frame_raw)) = decoder_iter.next() {
         let mut frame = GifFrame::render_frame_to_canvas(
             &frame_raw,
             &mut canvas,
             global_palette.as_ref(),
-            local_palette_cache_iter.next(),
+            local_palette_cache_iter
+                .as_mut()
+                .and_then(|x| x.next().unwrap()),
         );
         undither(&mut frame);
-        let prev_palette = frame.get_palette().clone();
-        //drop mut canvas ref here
         fuzzy_transparency(&mut frame, &prev_canvas);
         on_frame_processed(&mut frame, &prev_canvas);
+        //drop frame here
+        let prev_palette = frame.into_local_palette();
         for i in 0..height {
             for j in 0..width {
                 canvas[i][j] = match frame_raw.dispose {
@@ -145,7 +151,7 @@ where
         local_palettes.push(prev_palette);
     }
     println!("took {:?}", start.elapsed());
-    (global_palette.clone(), local_palettes.to_vec())
+    (global_palette, local_palettes)
 }
 /// returns (top_i,left_i,height,width) of smallest bounding rect of all opaque pixels
 fn fuzzy_transparency(

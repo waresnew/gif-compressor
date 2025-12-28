@@ -63,7 +63,7 @@ impl RGB {
         (0.299 * self.r as f32 + 0.587 * self.g as f32 + 0.114 * self.b as f32) as u8
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Palette {
     kdtree: KdTree<RGB, 3>,
 }
@@ -105,6 +105,9 @@ pub struct GifFrame<'a> {
     pub delay: u16,
 }
 impl<'a> GifFrame<'a> {
+    pub fn into_local_palette(self) -> Option<Palette> {
+        self.local_palette
+    }
     pub fn canvas_width(&self) -> usize {
         self.canvas[0].len()
     }

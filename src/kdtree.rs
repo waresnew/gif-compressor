@@ -20,7 +20,7 @@ pub trait Point<const K: usize> {
         ans as usize
     }
 }
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Node<T: Copy> {
     val: T,
     left: MaybeNode<T>,
@@ -56,7 +56,7 @@ impl<X: Ord + Eq, Y> PartialEq for PairFirstOnly<X, Y> {
     }
 }
 impl<X: Ord + Eq, Y> Eq for PairFirstOnly<X, Y> {}
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 ///dynamic insert/delete not implemented
 pub struct KdTree<T: Copy, const K: usize> {
     root: MaybeNode<T>,
@@ -162,40 +162,29 @@ mod tests {
     #[test]
     fn regular1() {
         let palette = vec![
-            RGB { r: 0, g: 0, b: 255 },
-            RGB { r: 0, g: 255, b: 0 },
-            RGB { r: 255, g: 0, b: 0 },
-            RGB {
-                r: 10,
-                g: 10,
-                b: 10,
-            },
+            RGB::new(0, 0, 255),
+            RGB::new(0, 255, 0),
+            RGB::new(255, 0, 0),
+            RGB::new(10, 10, 10),
         ];
         let tree = KdTree::new(palette);
-        let res = tree.k_nn(RGB { r: 30, g: 0, b: 0 }, 3);
-        assert!(
-            res[0]
-                == RGB {
-                    r: 10,
-                    g: 10,
-                    b: 10
-                }
-        );
-        assert!(res[1] == RGB { r: 255, g: 0, b: 0 });
+        let res = tree.k_nn(RGB::new(30, 0, 0), 3);
+        assert!(res[0] == RGB::new(10, 10, 10));
+        assert!(res[1] == RGB::new(255, 0, 0));
         assert!(res.len() == 3);
     }
     #[test]
     fn regular2() {
         let palette = vec![
-            RGB { r: 2, g: 1, b: 1 },
-            RGB { r: 0, g: 3, b: 2 },
-            RGB { r: 2, g: 2, b: 4 },
-            RGB { r: 5, g: 0, b: 0 },
+            RGB::new(2, 1, 1),
+            RGB::new(0, 3, 2),
+            RGB::new(2, 2, 4),
+            RGB::new(5, 0, 0),
         ];
         let tree = KdTree::new(palette);
-        let res = tree.k_nn(RGB { r: 1, g: 1, b: 1 }, 3);
-        assert!(res[0] == RGB { r: 2, g: 1, b: 1 });
-        assert!(res[1] == RGB { r: 0, g: 3, b: 2 });
-        assert!(res[2] == RGB { r: 2, g: 2, b: 4 });
+        let res = tree.k_nn(RGB::new(1, 1, 1), 3);
+        assert!(res[0] == RGB::new(2, 1, 1));
+        assert!(res[1] == RGB::new(0, 3, 2));
+        assert!(res[2] == RGB::new(2, 2, 4));
     }
 }

@@ -1,6 +1,6 @@
 use crate::image::{GifFrame, RGB};
 
-pub fn undither(frame: &mut GifFrame) -> Vec<Vec<RGB>> {
+pub fn undither(frame: &mut GifFrame) {
     let height = frame.canvas_height();
     let width = frame.canvas_width();
     let mut ans = vec![vec![RGB::default(); width]; height];
@@ -65,16 +65,20 @@ pub fn undither(frame: &mut GifFrame) -> Vec<Vec<RGB>> {
                 sum_b += weight * (neighbour.b as u32);
                 weight_len += weight;
             });
-            ans[i][j] = RGB {
-                r: (sum_r / weight_len) as u8,
-                g: (sum_g / weight_len) as u8,
-                b: (sum_b / weight_len) as u8,
-            };
+            ans[i][j] = RGB::new(
+                (sum_r / weight_len) as u8,
+                (sum_g / weight_len) as u8,
+                (sum_b / weight_len) as u8,
+            );
         }
     }
     assert_eq!(ans.len(), height);
     assert_eq!(ans[0].len(), width);
-    ans
+    for i in 0..height {
+        for j in 0..width {
+            frame.canvas[i][j] = ans[i][j];
+        }
+    }
 }
 /// returns centre value only
 fn prewitt_3x3_mag(input: [[u8; 3]; 3]) -> u32 {

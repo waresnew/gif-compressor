@@ -2,11 +2,12 @@ use gif::Frame;
 
 use crate::kdtree::{KdTree, Point};
 
-#[derive(Debug, Eq, PartialOrd, Ord, PartialEq, Default, Clone, Copy, Hash)]
+#[derive(Debug, Eq, PartialOrd, Ord, PartialEq, Clone, Copy, Hash, Default)]
 pub struct RGB {
     pub r: u8,
     pub g: u8,
     pub b: u8,
+    pub transparent: bool,
 }
 impl Point<3> for RGB {
     fn get(&self, dim: usize) -> i32 {
@@ -22,12 +23,28 @@ impl Point<3> for RGB {
     }
 }
 impl RGB {
-    pub fn average(&self, other: RGB) -> RGB {
-        RGB {
-            r: ((self.r as u16 + other.r as u16) / 2) as u8,
-            g: ((self.g as u16 + other.g as u16) / 2) as u8,
-            b: ((self.b as u16 + other.b as u16) / 2) as u8,
+    pub fn transparent() -> Self {
+        Self {
+            r: 0,
+            g: 0,
+            b: 0,
+            transparent: true,
         }
+    }
+    pub fn new(r: u8, g: u8, b: u8) -> Self {
+        Self {
+            r,
+            g,
+            b,
+            ..Default::default()
+        }
+    }
+    pub fn average(&self, other: RGB) -> RGB {
+        RGB::new(
+            ((self.r as u16 + other.r as u16) / 2) as u8,
+            ((self.g as u16 + other.g as u16) / 2) as u8,
+            ((self.b as u16 + other.b as u16) / 2) as u8,
+        )
     }
     pub fn distance_sq(&self, other: RGB) -> u32 {
         let dr = self.r as i32 - other.r as i32;
@@ -46,30 +63,23 @@ impl RGB {
         (0.299 * self.r as f32 + 0.587 * self.g as f32 + 0.114 * self.b as f32) as u8
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Palette {
-    pub bg: Option<RGB>,
     kdtree: KdTree<RGB, 3>,
 }
 impl Palette {
     fn parse_raw_palette(palette_raw: &[u8]) -> Vec<RGB> {
         palette_raw
             .chunks_exact(3)
-            .map(|c| RGB {
-                r: c[0],
-                g: c[1],
-                b: c[2],
-            })
+            .map(|c| RGB::new(c[0], c[1], c[2]))
             .collect()
     }
-    pub fn new(palette_raw: &[u8], bg_index: Option<usize>) -> Self {
+    pub fn new(palette_raw: &[u8]) -> Self {
         let mut palette = Self::parse_raw_palette(palette_raw);
         palette.sort();
         palette.dedup();
-        let bg = bg_index.map(|i| palette[i]);
         Self {
             kdtree: KdTree::new(palette),
-            bg,
         }
     }
     pub fn get_nearest(&self, target: RGB, exclude1: RGB, exclude2: RGB) -> RGB {
@@ -92,6 +102,7 @@ pub struct GifFrame<'a> {
     pub canvas: &'a mut Vec<Vec<RGB>>,
     global_palette: Option<&'a Palette>,
     local_palette: Option<Palette>,
+    pub delay: u16,
 }
 impl<'a> GifFrame<'a> {
     pub fn canvas_width(&self) -> usize {
@@ -104,6 +115,7 @@ impl<'a> GifFrame<'a> {
         frame: &Frame,
         canvas: &'a mut Vec<Vec<RGB>>,
         global_palette: Option<&'a Palette>,
+        local_palette_cached: Option<Palette>,
     ) -> Self {
         let pixels_raw: Vec<Vec<(u8, u8, u8, u8)>> = frame
             .buffer
@@ -121,17 +133,16 @@ impl<'a> GifFrame<'a> {
                 if a == 0 {
                     continue;
                 }
-                canvas[top + i][left + j] = RGB { r, g, b };
+                canvas[top + i][left + j] = RGB::new(r, g, b);
             }
         }
 
         Self {
             global_palette,
-            local_palette: frame
-                .palette
-                .as_ref()
-                .map(|local| Palette::new(local, None)),
+            local_palette: local_palette_cached
+                .or_else(|| frame.palette.as_ref().map(|local| Palette::new(local))),
             canvas,
+            delay: frame.delay,
         }
     }
     pub fn get_palette(&self) -> &Palette {

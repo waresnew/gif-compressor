@@ -5,4 +5,3 @@ edition = "2024"
 
 [dependencies]
 gif = "0.14.1"
-image = "0.25.9"

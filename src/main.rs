@@ -4,9 +4,9 @@ use gif_compressor::kdtree::{KdTree, PairFirstOnly, Point};
 use gif_compressor::undither::undither;
 use std::borrow::Cow;
 use std::collections::{BinaryHeap, HashMap};
+use std::env;
 use std::fs::File;
 use std::time::Instant;
-use std::{env, slice};
 fn main() {
     let args: Vec<String> = env::args().collect();
     let output_name = &args[2];

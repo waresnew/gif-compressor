@@ -91,7 +91,6 @@ impl RGB {
         (0.299 * dr * dr + 0.587 * dg * dg + 0.114 * db * db) as u32
     }
     pub fn as_luma(&self) -> u8 {
-        //Y component in YCbCr
         (0.299 * self.r as f32 + 0.587 * self.g as f32 + 0.114 * self.b as f32) as u8
     }
 }

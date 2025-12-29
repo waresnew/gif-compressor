@@ -9,15 +9,63 @@ use std::env;
 use std::fs::File;
 use std::time::Instant;
 
+#[derive(Debug)]
+struct Args {
+    pub input: String,
+    pub output: String,
+    pub stream: bool,
+}
+#[allow(clippy::derivable_impls)]
+impl Default for Args {
+    fn default() -> Self {
+        Self {
+            input: Default::default(),
+            output: Default::default(),
+            stream: false,
+        }
+    }
+}
+
+fn parse_args(mut args_raw: env::Args) -> Args {
+    let program_name = args_raw.next().unwrap();
+    let mut args = Args::default();
+    if args_raw.len() == 0 {
+        print_help(&program_name);
+        std::process::exit(0);
+    }
+    while let Some(arg) = args_raw.next() {
+        match arg.as_str() {
+            "-i" => {
+                args.input = args_raw.next().expect("missing input file");
+            }
+            "-h" | "--help" => {
+                print_help(&program_name);
+                std::process::exit(0);
+            }
+            "-o" => {
+                args.output = args_raw.next().expect("missing output file");
+            }
+            "--stream" => {
+                args.stream = true;
+            }
+            "--" => {
+                break;
+            }
+            x => {
+                println!("unexpected token: {}.\ntry {program_name} -h for help.", x);
+                std::process::exit(0);
+            }
+        }
+    }
+    args
+}
 fn main() {
     let start = Instant::now();
-    let args: Vec<String> = env::args().collect();
-    let output_name = &args[2];
-    let stream = true;
-    let decoder0 = make_decoder(&args);
+    let args = parse_args(env::args());
+    let decoder0 = make_decoder(&args.input);
     let height = decoder0.height() as usize;
     let width = decoder0.width() as usize;
-    let (new_palette, kept_frames) = calc_new_palette(decoder0, !stream);
+    let (new_palette, kept_frames) = calc_new_palette(decoder0, !args.stream);
 
     let palette_formatted: Vec<u8> = new_palette
         .iter()
@@ -33,7 +81,7 @@ fn main() {
     let new_palette_tree = KdTree::new(new_palette);
     let mut palette_nn_cache = FxHashMap::default();
 
-    let mut output = File::create(output_name).unwrap();
+    let mut output = File::create(&args.output).unwrap();
     let mut encoder =
         Encoder::new(&mut output, width as u16, height as u16, &palette_formatted).unwrap();
     encoder.set_repeat(gif::Repeat::Infinite).unwrap();
@@ -82,15 +130,15 @@ fn main() {
         is_first_frame = false;
         prev_canvas = canvas;
     };
-    if stream {
-        let decoder = make_decoder(&args);
+    if args.stream {
+        let decoder = make_decoder(&args.input);
         undither_all_stream(decoder, |frame| {
             write_frame((frame.canvas.clone(), frame.delay));
         });
     } else {
         kept_frames.unwrap().into_iter().for_each(write_frame);
     }
-    println!("took {:?}", start.elapsed());
+    println!("finished in {:?}", start.elapsed());
 }
 fn calc_new_palette(
     decoder: Decoder<File>,
@@ -161,10 +209,10 @@ where
         prev_canvas = canvas.clone();
     }
 }
-fn make_decoder(args: &[String]) -> Decoder<File> {
+fn make_decoder(file_name: &str) -> Decoder<File> {
     let mut decoder = gif::DecodeOptions::new();
     decoder.set_color_output(gif::ColorOutput::RGBA);
-    let file = File::open(&args[1]).unwrap();
+    let file = File::open(file_name).unwrap();
     decoder.read_info(file).unwrap()
 }
 /// returns (top_i,left_i,height,width) of smallest bounding rect of all opaque pixels
@@ -264,4 +312,23 @@ fn median_cut(lst: &mut [(RGB, usize)], max_n: usize) -> Vec<RGB> {
         },
     );
     ans
+}
+fn print_help(program_name: &str) {
+    let help_message = format!(
+        r#"
+https://github.com/waresnew/gif-compressor
+
+Usage:
+{} [arguments]
+
+Mandatory arguments:
+  -i FILE       Specify the input file.
+  -o FILE       Specify the output file.
+
+Optional arguments:
+  --stream      Instructs the program to not store all GIF frames in memory at once. Leads to reduced peak memory usage at the cost of longer runtime.
+"#,
+        program_name
+    );
+    println!("{help_message}")
 }

@@ -30,6 +30,7 @@ fn main() {
         index_map.insert(*x, i as u8);
     });
     let new_palette_tree = KdTree::new(new_palette);
+    let mut palette_nn_cache = FxHashMap::default();
 
     let mut output = File::create(output_name).unwrap();
     let mut encoder =
@@ -43,7 +44,9 @@ fn main() {
         for i in 0..height {
             for j in 0..width {
                 let cur = undithered_canvas.get(i, j);
-                let best = new_palette_tree.k_nn(cur, 1).unwrap()[0];
+                let best = new_palette_tree
+                    .k_nn(cur, 1, &mut palette_nn_cache)
+                    .unwrap()[0];
                 *undithered_canvas.get_mut(i, j) = best;
             }
         }

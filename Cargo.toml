@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 gif = "0.14.1"
+rayon = "1.11.0"
 rustc-hash = "2.1.1"

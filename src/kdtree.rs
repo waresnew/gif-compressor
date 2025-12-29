@@ -1,9 +1,4 @@
-use std::{
-    cell::{Ref, RefCell},
-    cmp::Ordering,
-    collections::BinaryHeap,
-    hash::Hash,
-};
+use std::{cmp::Ordering, collections::BinaryHeap, hash::Hash};
 
 use rustc_hash::FxHashMap;
 
@@ -61,7 +56,6 @@ impl<X: Ord + Eq, Y> Eq for PairFirstOnly<X, Y> {}
 ///dynamic insert/delete not implemented
 pub struct KdTree<T: Copy, const K: usize> {
     root: MaybeNode<T>,
-    cache: RefCell<FxHashMap<T, Vec<T>>>,
     size: usize,
 }
 
@@ -73,7 +67,6 @@ where
         Self {
             size: lst.len(),
             root: Self::make_subtree(&mut lst, 0),
-            cache: RefCell::new(FxHashMap::default()),
         }
     }
     fn make_subtree(lst: &mut [T], depth: usize) -> MaybeNode<T> {
@@ -130,18 +123,23 @@ where
         }
     }
     ///returns None iff k>kdtree size
-    pub fn k_nn(&self, target: T, k: usize) -> Option<Ref<'_, Vec<T>>> {
+    pub fn k_nn<'a>(
+        &self,
+        target: T,
+        k: usize,
+        cache: &'a mut FxHashMap<T, Vec<T>>,
+    ) -> Option<&'a Vec<T>> {
         if k > self.size {
             return None;
         }
-        self.cache.borrow_mut().entry(target).or_insert_with(|| {
+        cache.entry(target).or_insert_with(|| {
             let mut heap: BinaryHeap<PairFirstOnly<usize, T>> = BinaryHeap::with_capacity(k);
             Self::k_nn_helper(&self.root, target, k, 0, &mut heap);
 
             let res: Vec<T> = heap.into_sorted_vec().iter().map(|x| x.second).collect();
             res
         });
-        Some(Ref::map(self.cache.borrow(), |c| c.get(&target).unwrap()))
+        Some(cache.get(&target).unwrap())
     }
 }
 #[cfg(test)]
@@ -151,12 +149,19 @@ mod tests {
     #[test]
     fn empty_tree_panic() {
         let tree: KdTree<RGB, 3> = KdTree::new(Vec::new());
-        assert!(tree.k_nn(RGB::default(), 1).is_none());
+        assert!(
+            tree.k_nn(RGB::default(), 1, &mut FxHashMap::default())
+                .is_none()
+        );
     }
     #[test]
     fn empty_tree() {
         let tree: KdTree<RGB, 3> = KdTree::new(Vec::new());
-        assert!(tree.k_nn(RGB::default(), 0).unwrap().is_empty());
+        assert!(
+            tree.k_nn(RGB::default(), 0, &mut FxHashMap::default())
+                .unwrap()
+                .is_empty()
+        );
     }
     #[test]
     fn regular1() {
@@ -167,7 +172,8 @@ mod tests {
             RGB::new(10, 10, 10),
         ];
         let tree = KdTree::new(palette);
-        let res = tree.k_nn(RGB::new(30, 0, 0), 3).unwrap();
+        let mut hash_map = FxHashMap::default();
+        let res = tree.k_nn(RGB::new(30, 0, 0), 3, &mut hash_map).unwrap();
         assert!(res[0] == RGB::new(10, 10, 10));
         assert!(res[1] == RGB::new(255, 0, 0));
         assert!(res.len() == 3);
@@ -181,7 +187,8 @@ mod tests {
             RGB::new(5, 0, 0),
         ];
         let tree = KdTree::new(palette);
-        let res = tree.k_nn(RGB::new(1, 1, 1), 3).unwrap();
+        let mut hash_map = FxHashMap::default();
+        let res = tree.k_nn(RGB::new(1, 1, 1), 3, &mut hash_map).unwrap();
         assert!(res[0] == RGB::new(2, 1, 1));
         assert!(res[1] == RGB::new(0, 3, 2));
         assert!(res[2] == RGB::new(2, 2, 4));

@@ -2,6 +2,7 @@ use std::hash::Hash;
 use std::{cmp::Ordering, hash::Hasher};
 
 use gif::Frame;
+use rustc_hash::FxHashMap;
 
 use crate::kdtree::{KdTree, Point};
 
@@ -111,10 +112,16 @@ impl Palette {
         }
     }
     #[inline]
-    pub fn get_nearest(&self, target: RGB, exclude1: RGB, exclude2: RGB) -> Option<RGB> {
-        let res = self.kdtree.k_nn(target, 3);
+    pub fn get_nearest(
+        &self,
+        target: RGB,
+        exclude1: RGB,
+        exclude2: RGB,
+        cache: &mut FxHashMap<RGB, Vec<RGB>>,
+    ) -> Option<RGB> {
+        let res = self.kdtree.k_nn(target, 3, cache);
         if let Some(res) = res {
-            for &rgb in &*res {
+            for &rgb in res {
                 if rgb != exclude1 && rgb != exclude2 {
                     return Some(rgb);
                 }
@@ -140,9 +147,11 @@ impl Canvas {
             width,
         }
     }
+    #[inline]
     pub fn get(&self, i: usize, j: usize) -> RGB {
         self.buffer[self.width * i + j]
     }
+    #[inline]
     pub fn get_mut(&mut self, i: usize, j: usize) -> &mut RGB {
         &mut self.buffer[self.width * i + j]
     }

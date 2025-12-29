@@ -2,12 +2,11 @@ use gif::{Decoder, DisposalMethod, Encoder, Frame};
 use gif_compressor::image::{Canvas, GifFrame, Palette, RGB, RGB_TRANSPARENT};
 use gif_compressor::kdtree::{KdTree, PairFirstOnly, Point};
 use gif_compressor::undither::undither_frame;
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::FxHashMap;
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BinaryHeap};
 use std::env;
 use std::fs::File;
-use std::hash::{Hash, Hasher};
 use std::time::Instant;
 
 fn main() {
@@ -18,6 +17,7 @@ fn main() {
     let decoder = make_decoder(&args);
     let height = decoder.height() as usize;
     let width = decoder.width() as usize;
+
     let palette_formatted: Vec<u8> = new_palette
         .iter()
         .flat_map(|x| [x.r, x.g, x.b])
@@ -30,6 +30,7 @@ fn main() {
         index_map.insert(*x, i as u8);
     });
     let new_palette_tree = KdTree::new(new_palette);
+
     let mut output = File::create(output_name).unwrap();
     let mut encoder =
         Encoder::new(&mut output, width as u16, height as u16, &palette_formatted).unwrap();

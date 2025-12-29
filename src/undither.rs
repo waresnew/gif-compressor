@@ -1,19 +1,16 @@
-use crate::image::{GifFrame, RGB};
+use crate::image::{Canvas, GifFrame, RGB};
 
-pub fn undither(frame: &mut GifFrame) {
+pub fn undither_frame(frame: &mut GifFrame) {
     let height = frame.canvas_height();
     let width = frame.canvas_width();
-    let mut ans = vec![vec![RGB::default(); width]; height];
+    let mut ans = Canvas::blank(height, width);
     for i in 0..height {
         for j in 0..width {
-            let cur = frame.canvas[i][j];
-            let mut weight_len = 0;
+            let cur = frame.canvas.get(i, j);
+            let mut weight_len: u32 = 0;
             let mut sum_r = 0;
             let mut sum_g = 0;
             let mut sum_b = 0;
-            let mut prewitt_input = [[0; 3]; 3];
-            let canvas = &frame.canvas;
-            let palette = frame.get_palette();
             let for_each_neighbour = |f: &mut dyn FnMut((isize, isize), RGB)| {
                 for di in -1..=1_isize {
                     for dj in -1..=1_isize {
@@ -23,11 +20,12 @@ pub fn undither(frame: &mut GifFrame) {
                         let ni = (i as isize + di).clamp(0, height as isize - 1) as usize;
                         let nj = (j as isize + dj).clamp(0, width as isize - 1) as usize;
 
-                        let neighbour = canvas[ni][nj];
+                        let neighbour = frame.canvas.get(ni, nj);
                         f((di, dj), neighbour);
                     }
                 }
             };
+            let mut prewitt_input = [[0; 3]; 3];
             for_each_neighbour(&mut |(di, dj), neighbour| {
                 prewitt_input[(di + 1) as usize][(dj + 1) as usize] = neighbour.as_luma();
             });
@@ -35,48 +33,51 @@ pub fn undither(frame: &mut GifFrame) {
             let prewitt_high_threshold = 256;
             let prewitt_low_threshold = 160;
             let cur_weight = if prewitt > prewitt_high_threshold {
-                ans[i][j] = cur;
+                *ans.get_mut(i, j) = cur;
                 continue;
             } else if prewitt > prewitt_low_threshold {
                 24
             } else {
                 8
             };
-            weight_len += cur_weight;
-            sum_r += cur_weight * (cur.r as u32);
-            sum_b += cur_weight * (cur.b as u32);
-            sum_g += cur_weight * (cur.g as u32);
+            weight_len += cur_weight as u32;
+            sum_r += cur_weight as u32 * (cur.r as u32);
+            sum_b += cur_weight as u32 * (cur.b as u32);
+            sum_g += cur_weight as u32 * (cur.g as u32);
             for_each_neighbour(&mut |(_di, _dj), neighbour| {
                 let avg = cur.average(neighbour);
-                let nearest = palette.get_nearest(avg, cur, neighbour);
-                let dis1 = cur.distance_sq(avg);
-                let dis2 = avg.distance_sq(nearest);
-                let weight = if dis2 >= dis1 * 2 {
-                    8
-                } else if dis2 >= dis1 {
-                    6
-                } else if dis2 * 3 >= dis1 * 2 {
-                    1
+                let nearest = frame.get_palette().get_nearest(avg, cur, neighbour);
+                let weight = if let Some(nearest) = nearest {
+                    let dis1 = cur.distance_sq(avg);
+                    let dis2 = avg.distance_sq(nearest);
+                    if dis2 >= dis1 * 2 {
+                        8
+                    } else if dis2 >= dis1 {
+                        6
+                    } else if dis2 * 3 >= dis1 * 2 {
+                        1
+                    } else {
+                        0
+                    }
                 } else {
-                    0
-                } as u32;
-                sum_r += weight * (neighbour.r as u32);
-                sum_g += weight * (neighbour.g as u32);
-                sum_b += weight * (neighbour.b as u32);
-                weight_len += weight;
+                    8
+                };
+
+                sum_r += weight as u32 * (neighbour.r as u32);
+                sum_g += weight as u32 * (neighbour.g as u32);
+                sum_b += weight as u32 * (neighbour.b as u32);
+                weight_len += weight as u32;
             });
-            ans[i][j] = RGB::new(
+            *ans.get_mut(i, j) = RGB::new(
                 (sum_r / weight_len) as u8,
                 (sum_g / weight_len) as u8,
                 (sum_b / weight_len) as u8,
             );
         }
     }
-    assert_eq!(ans.len(), height);
-    assert_eq!(ans[0].len(), width);
     for i in 0..height {
         for j in 0..width {
-            frame.canvas[i][j] = ans[i][j];
+            *frame.canvas.get_mut(i, j) = ans.get(i, j);
         }
     }
 }

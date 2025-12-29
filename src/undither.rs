@@ -32,10 +32,11 @@ pub fn undither_frame(frame: &mut GifFrame) {
                     }
                 }
             }
-            let mut prewitt_input = [[0; 3]; 3];
+            let mut prewitt_input = [[0_i32; 3]; 3];
             for_each_neighbour(
                 |(di, dj), neighbour| {
-                    prewitt_input[(di + 1) as usize][(dj + 1) as usize] = neighbour.as_luma();
+                    prewitt_input[(di + 1) as usize][(dj + 1) as usize] =
+                        neighbour.as_luma() as i32;
                 },
                 (i, j),
                 (height, width),
@@ -98,19 +99,9 @@ pub fn undither_frame(frame: &mut GifFrame) {
         }
     }
 }
-/// returns centre value only
-fn prewitt_3x3_mag(input: [[u8; 3]; 3]) -> u32 {
-    let gx = convolve_3x3(&input, [[1, 0, -1], [1, 0, -1], [1, 0, -1]]);
-    let gy = convolve_3x3(&input, [[1, 1, 1], [0, 0, 0], [-1, -1, -1]]);
+#[inline]
+fn prewitt_3x3_mag(input: [[i32; 3]; 3]) -> u32 {
+    let gx = input[0][0] + input[1][0] + input[2][0] - input[0][2] - input[1][2] - input[2][2];
+    let gy = input[0][0] + input[0][1] + input[0][2] - input[2][0] - input[2][1] - input[2][2];
     (gx * gx + gy * gy).isqrt() as u32
-}
-/// returns centre value only
-fn convolve_3x3(input: &[[u8; 3]; 3], kernel: [[i8; 3]; 3]) -> i32 {
-    let mut ans = 0;
-    for m in 0..3 {
-        for n in 0..3 {
-            ans += input[m][n] as i32 * kernel[m][n] as i32;
-        }
-    }
-    ans
 }

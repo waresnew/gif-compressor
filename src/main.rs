@@ -10,13 +10,14 @@ use std::fs::File;
 use std::time::Instant;
 
 fn main() {
+    let start = Instant::now();
     let args: Vec<String> = env::args().collect();
     let output_name = &args[2];
+    let stream = true;
     let decoder0 = make_decoder(&args);
-    let new_palette = calc_new_palette(decoder0);
-    let decoder = make_decoder(&args);
-    let height = decoder.height() as usize;
-    let width = decoder.width() as usize;
+    let height = decoder0.height() as usize;
+    let width = decoder0.width() as usize;
+    let (new_palette, kept_frames) = calc_new_palette(decoder0, !stream);
 
     let palette_formatted: Vec<u8> = new_palette
         .iter()
@@ -38,26 +39,27 @@ fn main() {
     encoder.set_repeat(gif::Repeat::Infinite).unwrap();
     let mut is_first_frame = true;
     let mut prev_canvas = Canvas::blank(height, width);
-    undither_all(decoder, |frame| {
-        let mut undithered_canvas = frame.canvas.clone();
+    let mut write_frame = |(mut canvas, delay): (Canvas, u16)| {
         let mut indices: Vec<u8> = Vec::with_capacity(width * height);
         for i in 0..height {
             for j in 0..width {
-                let cur = undithered_canvas.get(i, j);
+                let cur = canvas.get(i, j);
+                if cur.transparent {
+                    continue;
+                }
                 let best = new_palette_tree
                     .k_nn(cur, 1, &mut palette_nn_cache)
                     .unwrap()[0];
-                *undithered_canvas.get_mut(i, j) = best;
+                *canvas.get_mut(i, j) = best;
             }
         }
         let (mut top, mut left, mut local_height, mut local_width) = (0, 0, height, width);
         if !is_first_frame {
-            (top, left, local_height, local_width) =
-                fuzzy_transparency(&mut undithered_canvas, &prev_canvas);
+            (top, left, local_height, local_width) = fuzzy_transparency(&mut canvas, &prev_canvas);
         }
         for i in 0..local_height {
             for j in 0..local_width {
-                let cur = undithered_canvas.get(top + i, left + j);
+                let cur = canvas.get(top + i, left + j);
                 if cur.transparent {
                     indices.push(transparent_index);
                 } else {
@@ -73,22 +75,38 @@ fn main() {
             buffer: Cow::Borrowed(&indices),
             dispose: DisposalMethod::Keep,
             transparent: Some(transparent_index),
-            delay: frame.delay,
+            delay,
             ..Default::default()
         };
         encoder.write_frame(&frame_output).unwrap();
         is_first_frame = false;
-        prev_canvas = undithered_canvas;
-    });
+        prev_canvas = canvas;
+    };
+    if stream {
+        let decoder = make_decoder(&args);
+        undither_all_stream(decoder, |frame| {
+            write_frame((frame.canvas.clone(), frame.delay));
+        });
+    } else {
+        kept_frames.unwrap().into_iter().for_each(write_frame);
+    }
+    println!("took {:?}", start.elapsed());
 }
-fn calc_new_palette(decoder: Decoder<File>) -> Vec<RGB> {
+fn calc_new_palette(
+    decoder: Decoder<File>,
+    keep_frames: bool,
+) -> (Vec<RGB>, Option<Vec<(Canvas, u16)>>) {
     let height = decoder.height() as usize;
     let width = decoder.width() as usize;
     let mut colour_freq = BTreeMap::default(); //not hashmap for into_iter() determinism
     let mut prev_canvas = Canvas::blank(height, width);
-    undither_all(decoder, |frame| {
+    let mut kept_frames = Vec::new();
+    let mut is_first_frame = true;
+    undither_all_stream(decoder, |frame| {
         let mut canvas = frame.canvas.clone();
-        fuzzy_transparency(&mut canvas, &prev_canvas);
+        if !is_first_frame {
+            fuzzy_transparency(&mut canvas, &prev_canvas);
+        }
         for i in 0..height {
             for j in 0..width {
                 let cur = canvas.get(i, j);
@@ -99,19 +117,24 @@ fn calc_new_palette(decoder: Decoder<File>) -> Vec<RGB> {
                 *colour_freq.get_mut(&cur).unwrap() += 1;
             }
         }
+        if keep_frames {
+            kept_frames.push((canvas.clone(), frame.delay));
+        }
         prev_canvas = canvas;
+        is_first_frame = false;
     });
-
-    median_cut(
-        &mut colour_freq.into_iter().collect::<Vec<(RGB, usize)>>(),
-        255,
+    (
+        median_cut(
+            &mut colour_freq.into_iter().collect::<Vec<(RGB, usize)>>(),
+            255,
+        ),
+        if keep_frames { Some(kept_frames) } else { None },
     )
 }
-fn undither_all<F>(decoder: Decoder<File>, mut post_undither: F)
+fn undither_all_stream<F>(decoder: Decoder<File>, mut post_undither: F)
 where
     F: FnMut(&GifFrame), //ideally keep gifframe immutable to avoid affecting future frame calcs
 {
-    let start = Instant::now();
     let height = decoder.height() as usize;
     let width = decoder.width() as usize;
     if width == 0 || height == 0 {
@@ -137,7 +160,6 @@ where
         }
         prev_canvas = canvas.clone();
     }
-    println!("took {:?}", start.elapsed());
 }
 fn make_decoder(args: &[String]) -> Decoder<File> {
     let mut decoder = gif::DecodeOptions::new();

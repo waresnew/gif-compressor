@@ -1,4 +1,5 @@
 use gif::{Decoder, DisposalMethod, Encoder, Frame};
+use gif_compressor::cli::parse_args;
 use gif_compressor::image::{Canvas, GifFrame, Palette, RGB, RGB_TRANSPARENT};
 use gif_compressor::kdtree::{KdTree, PairFirstOnly, Point};
 use gif_compressor::undither::undither_frame;
@@ -9,56 +10,6 @@ use std::env;
 use std::fs::File;
 use std::time::Instant;
 
-#[derive(Debug)]
-struct Args {
-    pub input: String,
-    pub output: String,
-    pub stream: bool,
-}
-#[allow(clippy::derivable_impls)]
-impl Default for Args {
-    fn default() -> Self {
-        Self {
-            input: Default::default(),
-            output: Default::default(),
-            stream: false,
-        }
-    }
-}
-
-fn parse_args(mut args_raw: env::Args) -> Args {
-    let program_name = args_raw.next().unwrap();
-    let mut args = Args::default();
-    if args_raw.len() == 0 {
-        print_help(&program_name);
-        std::process::exit(0);
-    }
-    while let Some(arg) = args_raw.next() {
-        match arg.as_str() {
-            "-i" => {
-                args.input = args_raw.next().expect("missing input file");
-            }
-            "-h" | "--help" => {
-                print_help(&program_name);
-                std::process::exit(0);
-            }
-            "-o" => {
-                args.output = args_raw.next().expect("missing output file");
-            }
-            "--stream" => {
-                args.stream = true;
-            }
-            "--" => {
-                break;
-            }
-            x => {
-                println!("unexpected token: {}.\ntry {program_name} -h for help.", x);
-                std::process::exit(0);
-            }
-        }
-    }
-    args
-}
 fn main() {
     let start = Instant::now();
     let args = parse_args(env::args());
@@ -140,6 +91,7 @@ fn main() {
     }
     println!("finished in {:?}", start.elapsed());
 }
+//1st pass
 fn calc_new_palette(
     decoder: Decoder<File>,
     keep_frames: bool,
@@ -312,23 +264,4 @@ fn median_cut(lst: &mut [(RGB, usize)], max_n: usize) -> Vec<RGB> {
         },
     );
     ans
-}
-fn print_help(program_name: &str) {
-    let help_message = format!(
-        r#"
-https://github.com/waresnew/gif-compressor
-
-Usage:
-{} [arguments]
-
-Mandatory arguments:
-  -i FILE       Specify the input file.
-  -o FILE       Specify the output file.
-
-Optional arguments:
-  --stream      Instructs the program to not store all GIF frames in memory at once. Leads to reduced peak memory usage at the cost of longer runtime.
-"#,
-        program_name
-    );
-    println!("{help_message}")
 }

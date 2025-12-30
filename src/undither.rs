@@ -1,12 +1,11 @@
-use crate::image::{GifFrame, RGB, RGB_TRANSPARENT};
+use crate::image::{Canvas, GifFrame, Palette, RGB, RGB_TRANSPARENT};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
-pub fn undither_frame(frame: &mut GifFrame) {
-    let height = frame.canvas_height();
-    let width = frame.canvas_width();
+pub fn undither_frame(canvas: &mut Canvas, palette: &Palette) {
+    let height = canvas.height;
+    let width = canvas.width;
     let mut ans = vec![RGB_TRANSPARENT; height * width];
-    frame
-        .canvas
+    canvas
         .buffer
         .par_chunks_exact(width)
         .zip(ans.par_chunks_exact_mut(width))
@@ -29,7 +28,7 @@ pub fn undither_frame(frame: &mut GifFrame) {
                             let ni = (i as isize + di).clamp(0, height as isize - 1) as usize;
                             let nj = (j as isize + dj).clamp(0, width as isize - 1) as usize;
 
-                            let neighbour = frame.canvas.get(ni, nj);
+                            let neighbour = canvas.get(ni, nj);
                             if !neighbour.transparent {
                                 all_transparent = false;
                             }
@@ -73,9 +72,7 @@ pub fn undither_frame(frame: &mut GifFrame) {
                     sum_g += cur_weight as u32 * (cur.g as u32);
                     for neighbour in neighbours {
                         let avg = cur.average(neighbour);
-                        let nearest = frame
-                            .get_palette()
-                            .get_nearest(avg, *cur, neighbour, nn_cache);
+                        let nearest = palette.get_nearest(avg, *cur, neighbour, nn_cache);
                         let weight = if let Some(nearest) = nearest {
                             let dis1 = cur.distance_sq(avg);
                             let dis2 = avg.distance_sq(nearest);
@@ -105,7 +102,7 @@ pub fn undither_frame(frame: &mut GifFrame) {
                 }
             },
         );
-    frame.canvas.buffer = ans;
+    canvas.buffer = ans;
 }
 #[inline]
 fn prewitt_3x3_mag(input: [[i32; 3]; 3]) -> u32 {

@@ -60,7 +60,7 @@ pub fn undither_frame(frame: &mut GifFrame) {
                     let prewitt_high_threshold = 256;
                     let prewitt_low_threshold = 160;
                     let cur_weight = if prewitt > prewitt_high_threshold {
-                        output_row[j] = *cur;
+                        output_row[j] = input_row[j];
                         continue;
                     } else if prewitt > prewitt_low_threshold {
                         24

@@ -1,5 +1,5 @@
 /target
-/examples
+/testing
 /output
-*.gif
+/*.gif
 profile.json.gz

@@ -37,7 +37,7 @@ fn main() {
         Encoder::new(&mut output, width as u16, height as u16, &palette_formatted).unwrap();
     encoder.set_repeat(gif::Repeat::Infinite).unwrap();
     let mut is_first_frame = true;
-    let mut prev_canvas = Canvas::blank(height, width);
+    let mut prev_output_canvas = Canvas::blank(height, width);
     let mut write_frame = |(mut canvas, delay): (Canvas, u16)| {
         let mut indices: Vec<u8> = Vec::with_capacity(width * height);
         for i in 0..height {
@@ -54,7 +54,10 @@ fn main() {
         }
         let (mut top, mut left, mut local_height, mut local_width) = (0, 0, height, width);
         if !is_first_frame {
-            (top, left, local_height, local_width) = fuzzy_transparency(&mut canvas, &prev_canvas);
+            (top, left, local_height, local_width) =
+                fuzzy_transparency(&mut canvas, &prev_output_canvas, &args);
+        } else {
+            is_first_frame = false;
         }
         for i in 0..local_height {
             for j in 0..local_width {
@@ -63,6 +66,7 @@ fn main() {
                     indices.push(transparent_index);
                 } else {
                     indices.push(index_map[&cur]);
+                    *prev_output_canvas.get_mut(top + i, left + j) = cur;
                 }
             }
         }
@@ -78,8 +82,6 @@ fn main() {
             ..Default::default()
         };
         encoder.write_frame(&frame_output).unwrap();
-        is_first_frame = false;
-        prev_canvas = canvas;
     };
     if args.stream {
         let decoder = make_decoder(&args.input);

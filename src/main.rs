@@ -139,13 +139,18 @@ where
     let mut canvas = Canvas::blank(height, width);
     let mut prev_canvas = canvas.clone();
     let mut decoder_iter = decoder.into_iter();
+    let mut is_first_frame = true;
     while let Some(Ok(frame_raw)) = decoder_iter.next() {
         let mut frame =
             GifFrame::render_frame_to_canvas(&frame_raw, &mut canvas, global_palette.as_ref());
         let frame_delay = frame.delay;
         undither_frame(&mut frame);
         //drop frame here
-        fuzzy_transparency(&mut canvas, &prev_canvas);
+        if !is_first_frame {
+            fuzzy_transparency(&mut canvas, &prev_canvas);
+        } else {
+            is_first_frame = false;
+        }
         post_undither((&canvas, frame_delay));
         for i in 0..height {
             for j in 0..width {

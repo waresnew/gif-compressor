@@ -83,8 +83,8 @@ fn main() {
     };
     if args.stream {
         let decoder = make_decoder(&args.input);
-        undither_all_stream(decoder, |frame| {
-            write_frame((frame.canvas.clone(), frame.delay));
+        undither_all_stream(decoder, |(canvas, delay)| {
+            write_frame((canvas.clone(), delay));
         });
     } else {
         kept_frames.unwrap().into_iter().for_each(write_frame);
@@ -102,11 +102,8 @@ fn calc_new_palette(
     let mut prev_canvas = Canvas::blank(height, width);
     let mut kept_frames = Vec::new();
     let mut is_first_frame = true;
-    undither_all_stream(decoder, |frame| {
-        let mut canvas = frame.canvas.clone();
-        if !is_first_frame {
-            fuzzy_transparency(&mut canvas, &prev_canvas);
-        }
+    undither_all_stream(decoder, |(canvas, delay)| {
+        let canvas = canvas.clone();
         for i in 0..height {
             for j in 0..width {
                 let cur = canvas.get(i, j);
@@ -118,7 +115,7 @@ fn calc_new_palette(
             }
         }
         if keep_frames {
-            kept_frames.push((canvas.clone(), frame.delay));
+            kept_frames.push((canvas.clone(), delay));
         }
         prev_canvas = canvas;
         is_first_frame = false;
@@ -133,7 +130,7 @@ fn calc_new_palette(
 }
 fn undither_all_stream<F>(decoder: Decoder<File>, mut post_undither: F)
 where
-    F: FnMut(&GifFrame), //ideally keep gifframe immutable to avoid affecting future frame calcs
+    F: FnMut((&Canvas, u16)), //ideally keep gifframe immutable to avoid affecting future frame calcs
 {
     let height = decoder.height() as usize;
     let width = decoder.width() as usize;
@@ -147,8 +144,11 @@ where
     while let Some(Ok(frame_raw)) = decoder_iter.next() {
         let mut frame =
             GifFrame::render_frame_to_canvas(&frame_raw, &mut canvas, global_palette.as_ref());
+        let frame_delay = frame.delay;
         undither_frame(&mut frame);
-        post_undither(&frame);
+        //drop frame here
+        fuzzy_transparency(&mut canvas, &prev_canvas);
+        post_undither((&canvas, frame_delay));
         for i in 0..height {
             for j in 0..width {
                 *canvas.get_mut(i, j) = match frame_raw.dispose {

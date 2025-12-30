@@ -1,5 +1,5 @@
 use gif::{Decoder, DisposalMethod, Encoder, Frame};
-use gif_compressor::cli::parse_args;
+use gif_compressor::cli::{Args, parse_args};
 use gif_compressor::image::{Canvas, GifFrame, Palette, RGB, RGB_TRANSPARENT};
 use gif_compressor::kdtree::{KdTree, PairFirstOnly, Point};
 use gif_compressor::undither::undither_frame;
@@ -16,7 +16,7 @@ fn main() {
     let decoder0 = make_decoder(&args.input);
     let height = decoder0.height() as usize;
     let width = decoder0.width() as usize;
-    let (new_palette, kept_frames) = calc_new_palette(decoder0, !args.stream);
+    let (new_palette, kept_frames) = calc_new_palette(decoder0, &args);
 
     let palette_formatted: Vec<u8> = new_palette
         .iter()
@@ -85,7 +85,7 @@ fn main() {
     };
     if args.stream {
         let decoder = make_decoder(&args.input);
-        undither_all_stream(decoder, |(canvas, delay)| {
+        undither_all_stream(decoder, &args, |(canvas, delay)| {
             write_frame((canvas.clone(), delay));
         });
     } else {
@@ -94,17 +94,13 @@ fn main() {
     println!("finished in {:?}", start.elapsed());
 }
 //1st pass
-fn calc_new_palette(
-    decoder: Decoder<File>,
-    keep_frames: bool,
-) -> (Vec<RGB>, Option<Vec<(Canvas, u16)>>) {
+fn calc_new_palette(decoder: Decoder<File>, args: &Args) -> (Vec<RGB>, Option<Vec<(Canvas, u16)>>) {
     let height = decoder.height() as usize;
     let width = decoder.width() as usize;
     let mut colour_freq = BTreeMap::default(); //not hashmap for into_iter() determinism
     let mut prev_canvas = Canvas::blank(height, width);
     let mut kept_frames = Vec::new();
-    undither_all_stream(decoder, |(canvas, delay)| {
-        let canvas = canvas.clone();
+    undither_all_stream(decoder, args, |(canvas, delay)| {
         for i in 0..height {
             for j in 0..width {
                 let cur = canvas.get(i, j);
@@ -115,20 +111,24 @@ fn calc_new_palette(
                 *colour_freq.get_mut(&cur).unwrap() += 1;
             }
         }
-        if keep_frames {
+        if !args.stream {
             kept_frames.push((canvas.clone(), delay));
         }
-        prev_canvas = canvas;
+        prev_canvas = canvas.clone();
     });
     (
         median_cut(
             &mut colour_freq.into_iter().collect::<Vec<(RGB, usize)>>(),
             255,
         ),
-        if keep_frames { Some(kept_frames) } else { None },
+        if !args.stream {
+            Some(kept_frames)
+        } else {
+            None
+        },
     )
 }
-fn undither_all_stream<F>(decoder: Decoder<File>, mut post_undither: F)
+fn undither_all_stream<F>(decoder: Decoder<File>, args: &Args, mut post_undither: F)
 where
     F: FnMut((&Canvas, u16)), //ideally keep gifframe immutable to avoid affecting future frame calcs
 {
@@ -173,10 +173,13 @@ fn make_decoder(file_name: &str) -> Decoder<File> {
     decoder.read_info(file).unwrap()
 }
 /// returns (top_i,left_i,height,width) of smallest bounding rect of all opaque pixels
-fn fuzzy_transparency(canvas: &mut Canvas, prev_canvas: &Canvas) -> (usize, usize, usize, usize) {
+fn fuzzy_transparency(
+    canvas: &mut Canvas,
+    prev_canvas: &Canvas,
+    args: &Args,
+) -> (usize, usize, usize, usize) {
     let height = canvas.height;
     let width = canvas.width;
-    let threshold = 5;
     let mut max_i = 0;
     let mut min_i = height - 1;
     let mut max_j = 0;
@@ -185,7 +188,10 @@ fn fuzzy_transparency(canvas: &mut Canvas, prev_canvas: &Canvas) -> (usize, usiz
         for j in 0..width {
             let cur = canvas.get(i, j);
             let prev = prev_canvas.get(i, j);
-            if cur.distance_luma_sq(prev) < threshold * threshold {
+            if cur.transparent
+                || cur.distance_luma_sq(prev)
+                    < args.transparency_threshold * args.transparency_threshold
+            {
                 canvas.get_mut(i, j).transparent = true;
             } else {
                 max_i = max_i.max(i);

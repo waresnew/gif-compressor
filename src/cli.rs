@@ -67,5 +67,9 @@ pub fn parse_args(mut args_raw: env::Args) -> Args {
             }
         }
     }
+    if args.input.is_empty() || args.output.is_empty() {
+        println!("input or output file argument is missing");
+        std::process::exit(0);
+    }
     args
 }

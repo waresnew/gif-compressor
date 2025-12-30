@@ -157,24 +157,20 @@ impl Canvas {
 }
 
 ///fully composited gif frame
-pub struct GifFrame<'a> {
-    pub canvas: &'a mut Canvas,
-    global_palette: Option<&'a Palette>,
-    local_palette: Option<Palette>,
+#[derive(Clone)]
+pub struct GifFrame {
+    pub canvas: Canvas,
     pub delay: u16,
 }
-impl<'a> GifFrame<'a> {
+impl GifFrame {
     pub fn canvas_width(&self) -> usize {
         self.canvas.width
     }
     pub fn canvas_height(&self) -> usize {
         self.canvas.height
     }
-    pub fn render_frame_to_canvas(
-        frame: &Frame,
-        canvas: &'a mut Canvas,
-        global_palette: Option<&'a Palette>,
-    ) -> Self {
+    pub fn render_frame_to_canvas(frame: &Frame, prev_canvas: &Canvas) -> Self {
+        let mut canvas = prev_canvas.clone();
         let pixels_raw: Vec<(u8, u8, u8, u8)> = frame
             .buffer
             .chunks_exact(4)
@@ -193,19 +189,8 @@ impl<'a> GifFrame<'a> {
         }
 
         Self {
-            global_palette,
-            local_palette: frame.palette.as_ref().map(|local| Palette::new(local)),
             canvas,
             delay: frame.delay,
-        }
-    }
-    pub fn get_palette(&self) -> &Palette {
-        if let Some(local) = &self.local_palette {
-            local
-        } else if let Some(global) = self.global_palette {
-            global
-        } else {
-            panic!("malformed gif: no global or local palette");
         }
     }
 }

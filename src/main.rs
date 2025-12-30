@@ -91,9 +91,11 @@ fn main() {
     } else {
         kept_frames.unwrap().into_iter().for_each(write_frame);
     }
-    println!("finished in {:?}", start.elapsed());
+    println!(
+        "finished in {:.1}s",
+        start.elapsed().as_millis() as f32 / 1000.0
+    );
 }
-//1st pass
 fn calc_new_palette(decoder: Decoder<File>, args: &Args) -> (Vec<RGB>, Option<Vec<GifFrame>>) {
     let height = decoder.height() as usize;
     let width = decoder.width() as usize;
@@ -128,7 +130,7 @@ fn calc_new_palette(decoder: Decoder<File>, args: &Args) -> (Vec<RGB>, Option<Ve
 }
 fn undither_all<F>(decoder: Decoder<File>, args: &Args, mut post_undither: F)
 where
-    F: FnMut(GifFrame), //ideally keep gifframe immutable to avoid affecting future frame calcs
+    F: FnMut(GifFrame),
 {
     let height = decoder.height() as usize;
     let width = decoder.width() as usize;
@@ -149,7 +151,6 @@ where
             panic!("malformed gif: no global or local palette");
         };
         undither_frame(&mut frame.canvas, palette);
-        //drop frame here
         if !is_first_frame {
             apply_transparency(&mut frame.canvas, &prev_canvas, args);
         } else {
@@ -157,6 +158,7 @@ where
         }
         let mut disposed = frame.canvas.clone();
         post_undither(frame);
+        //drop frame here
         for i in 0..height {
             for j in 0..width {
                 *disposed.get_mut(i, j) = match frame_raw.dispose {

@@ -101,7 +101,6 @@ fn calc_new_palette(
     let mut colour_freq = BTreeMap::default(); //not hashmap for into_iter() determinism
     let mut prev_canvas = Canvas::blank(height, width);
     let mut kept_frames = Vec::new();
-    let mut is_first_frame = true;
     undither_all_stream(decoder, |(canvas, delay)| {
         let canvas = canvas.clone();
         for i in 0..height {
@@ -118,7 +117,6 @@ fn calc_new_palette(
             kept_frames.push((canvas.clone(), delay));
         }
         prev_canvas = canvas;
-        is_first_frame = false;
     });
     (
         median_cut(

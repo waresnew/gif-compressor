@@ -35,7 +35,7 @@ eg. `cargo run --release -- -i input.gif -o output.gif`
 
 The program output is compared to the file size of running [gifsicle](https://github.com/kohler/gifsicle) with the `-O3` and `--lossy=200` arguments on the same input.
 
-|Input|Gifsicle (-O3 --lossy=200)|Program Output|
+|Input|Gifsicle|Program Output|
 | ----------- | ----------- | ----------- |
 |28.7 MB <br>![Sample GIF 1](examples/childe.gif) |25.6 MB (-11%)| 19 MB (-34%) <br>![Sample GIF 1](examples/childe_output.gif)|
 |3.6 MB <br>![Sample GIF 2](examples/terraria_iframe.gif) |2.5 MB (-31%)| 2.1 MB (-42%) <br>![Sample GIF 2](examples/terraria_iframe_output.gif)|

@@ -1,4 +1,4 @@
-use crate::image::{Canvas, GifFrame, Palette, RGB, RGB_TRANSPARENT};
+use crate::image::{Canvas, Palette, RGB, RGB_TRANSPARENT};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 pub fn undither_frame(canvas: &mut Canvas, palette: &Palette) {

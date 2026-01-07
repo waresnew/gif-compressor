@@ -35,9 +35,30 @@ eg. `cargo run --release -- -i input.gif -o output.gif`
 
 The program output is compared to the file size of running [gifsicle](https://github.com/kohler/gifsicle) with the `-O3` and `--lossy=200` arguments on the same input.
 
-|Input|Gifsicle|Program Output|
-| ----------- | ----------- | ----------- |
-|28.7 MB <br>![Sample GIF 1](examples/childe.gif) |25.6 MB (-11%)| 19 MB (-34%) <br>![Sample GIF 1](examples/childe_output.gif)|
-|3.6 MB <br>![Sample GIF 2](examples/terraria_iframe.gif) |2.5 MB (-31%)| 2.1 MB (-42%) <br>![Sample GIF 2](examples/terraria_iframe_output.gif)|
-|80.3 MB <br>![Sample GIF 3](examples/skywars_pearl.gif) |64.2 MB (-20%)| 41 MB (-49%) <br>![Sample GIF 3](examples/skywars_pearl_output.gif)|
-|78.8 MB <br>![Sample GIF 4](examples/ninesols.gif) |38 MB (-52%)| 30.9 MB (-61%)<br>![Sample GIF 4](examples/ninesols_output.gif)|
+<table>
+<tr>
+<th width="45%">Input</th>
+<th width="10%">Gifsicle</th>
+<th width="45%">Program Output</th>
+</tr>
+<tr>
+<td width="45%">28.7 MB <br><img src="examples/childe.gif" width="100%"></td>
+<td width="10%">25.6 MB (-11%)</td>
+<td width="45%">19 MB (-34%) <br><img src="examples/childe_output.gif" width="100%"></td>
+</tr>
+<tr>
+<td width="45%">3.6 MB <br><img src="examples/terraria_iframe.gif" width="100%"></td>
+<td width="10%">2.5 MB (-31%)</td>
+<td width="45%">2.1 MB (-42%) <br><img src="examples/terraria_iframe_output.gif" width="100%"></td>
+</tr>
+<tr>
+<td width="45%">80.3 MB <br><img src="examples/skywars_pearl.gif" width="100%"></td>
+<td width="10%">64.2 MB (-20%)</td>
+<td width="45%">41 MB (-49%) <br><img src="examples/skywars_pearl_output.gif" width="100%"></td>
+</tr>
+<tr>
+<td width="45%">78.8 MB <br><img src="examples/ninesols.gif" width="100%"></td>
+<td width="10%">38 MB (-52%)</td>
+<td width="45%">30.9 MB (-61%) <br><img src="examples/ninesols_output.gif" width="100%"></td>
+</tr>
+</table>

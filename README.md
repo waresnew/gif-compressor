@@ -35,6 +35,8 @@ eg. `cargo run --release -- -i input.gif -o output.gif`
 
 The program output is compared to the file size of running [gifsicle](https://github.com/kohler/gifsicle) with the `-O3` and `--lossy=200` arguments on the same input.
 
+*(May take a few seconds for the images to load)*
+
 <table>
 <tr>
 <th width="45%">Input</th>

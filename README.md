@@ -4,13 +4,13 @@ GIF compression tool that focuses on undoing error diffusion dithering.
 
 ## Background
 
-GIFs are a paletted image format with 256 colours maximum per frame, which often leads to colour quantization artifacts. Error diffusion dithering, such as Floyd-Steinberg, is very commonly applied by default to GIFs to mitigate this.
+GIFs are a paletted image format with 256 colours maximum per frame, which often leads to colour quantization artifacts. Error diffusion dithering is very commonly applied by default to GIFs to mitigate this.
 
-However, dithering greatly harms compression (such as LZW) due to repeated irregular patterns, leading to GIFs that barely reduce in file size from regular compression tools. By undoing the dithering, significant reductions in file size can be achieved, at the cost of some colour banding artifacts.
+However, dithering greatly harms compression (such as LZW) due to irregular pixel patterns, leading to GIFs that barely reduce in file size from regular compression tools. By undoing this dithering, significant reductions in file size can be achieved, at the cost of some colour banding artifacts.
 
 ## How it works
 
-A heuristic based on [this project](https://github.com/kornelski/undither) was adapted for GIFs to identify dithering patterns. After all frames are undithered, an optimized global palette is created using the median cut algorithm. This new palette is used in the requantization of the unpaletted frames to produce a valid GIF. A k-d tree is used instead of a VP tree to support the nearest neighbour queries for these tasks.
+A heuristic based on [this project](https://github.com/kornelski/undither) was adapted for GIFs to identify dithering patterns. After all frames are undithered, they are requantized with a newly generated colour palette to produce a valid GIF.
 
 Below is a zoomed in sample of the dithering removal. It's not a perfect process because error diffusion dithering is lossy.
 |Before (Dithered)|After (Undithered & requantized)|
@@ -34,6 +34,8 @@ eg. `cargo run --release -- -i input.gif -o output.gif`
 ## Showcase
 
 The program output is compared to the file size of running [gifsicle](https://github.com/kohler/gifsicle) with the `-O3` and `--lossy=200` arguments on the same input.
+
+*(May take a few seconds for the images to load)*
 
 <table>
 <tr>

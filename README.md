@@ -15,7 +15,7 @@ A heuristic based on [this project](https://github.com/kornelski/undither) was a
 Below is a zoomed in sample of the dithering removal. It's not a perfect process because error diffusion dithering is lossy.
 |Before (Dithered)|After (Undithered & requantized)|
 | ----------- | ----------- |
-|![](examples/preditherchilde.png)|![](examples/postditherchilde.png)|
+|<img width="393" height="393" alt="preditherchilde" src="https://github.com/user-attachments/assets/9e258c0f-2e38-4bc0-a87f-36e0d34ed2be" />|<img width="393" height="393" alt="postditherchilde" src="https://github.com/user-attachments/assets/f9dead43-4fbc-4aca-a0ee-f4d015b940df" />|
 
 ## Usage
 
@@ -44,23 +44,23 @@ The program output is compared to the file size of running [gifsicle](https://gi
 <th width="45%">Program Output</th>
 </tr>
 <tr>
-<td width="45%">28.7 MB <br><img src="examples/childe.gif" width="100%"></td>
+<td width="45%">28.7 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" width="100%"></td>
 <td width="10%">25.6 MB (-11%)</td>
-<td width="45%">19 MB (-34%) <br><img src="examples/childe_output.gif" width="100%"></td>
+<td width="45%">19 MB (-34%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
 </tr>
 <tr>
-<td width="45%">3.6 MB <br><img src="examples/terraria_iframe.gif" width="100%"></td>
+<td width="45%">3.6 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" width="100%"></td>
 <td width="10%">2.5 MB (-31%)</td>
-<td width="45%">2.1 MB (-42%) <br><img src="examples/terraria_iframe_output.gif" width="100%"></td>
+<td width="45%">2.1 MB (-42%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
 </tr>
 <tr>
-<td width="45%">80.3 MB <br><img src="examples/skywars_pearl.gif" width="100%"></td>
+<td width="45%">80.3 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" width="100%"></td>
 <td width="10%">64.2 MB (-20%)</td>
-<td width="45%">41 MB (-49%) <br><img src="examples/skywars_pearl_output.gif" width="100%"></td>
+<td width="45%">41 MB (-49%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
 </tr>
 <tr>
-<td width="45%">78.8 MB <br><img src="examples/ninesols.gif" width="100%"></td>
+<td width="45%">78.8 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" width="100%"></td>
 <td width="10%">38 MB (-52%)</td>
-<td width="45%">30.9 MB (-61%) <br><img src="examples/ninesols_output.gif" width="100%"></td>
+<td width="45%">30.9 MB (-61%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
 </tr>
 </table>

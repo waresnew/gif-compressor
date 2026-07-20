@@ -19,26 +19,19 @@ impl Default for Args {
     }
 }
 
-fn get_help_msg(program_name: &str) -> String {
-    format!(
-        r#"
-https://github.com/waresnew/gif-compressor
-
+fn get_help_msg() -> &'static str {
+    r#"
 Usage:
-{} [arguments]
-
   -i, --input FILE               (Mandatory) Specify the input file path.
   -o, --output FILE              (Mandatory) Specify the output file path.
   -h, --help                     Prints this help message.
   -s, --stream                   Instructs the program to not store all GIF frames in memory at once. Leads to reduced peak memory usage at the cost of longer runtime.
   -t, --transparency INTEGER     Specify a non-negative colour distance threshold for transparency optimization. Default: 5
-"#,
-        program_name
-    )
+"#
 }
 pub fn parse_args(mut args_raw: env::Args) -> Args {
     let program_name = args_raw.next().unwrap();
-    let help_msg = get_help_msg(&program_name);
+    let help_msg = get_help_msg();
     let mut args = Args::default();
     if args_raw.len() == 0 {
         eprintln!("{help_msg}");

@@ -6,7 +6,7 @@ GIF compression tool that focuses on undoing error diffusion dithering.
 
 GIFs are a paletted image format with 256 colours maximum per frame, which often leads to colour quantization artifacts. Error diffusion dithering is very commonly applied by default to GIFs to mitigate this.
 
-However, dithering greatly harms compression (such as LZW) due to irregular pixel patterns, leading to GIFs that barely reduce in file size from regular compression tools. By undoing this dithering, significant reductions in file size can be achieved, at the cost of some colour banding artifacts.
+However, dithering greatly harms compression (such as LZW, which GIFs use) due to irregular pixel patterns, leading to GIFs that barely reduce in file size from regular compression tools. By undoing this dithering, significant reductions in file size can be achieved, at the cost of some colour banding artifacts.
 
 ## How it works
 
@@ -19,8 +19,9 @@ Below is a zoomed in sample of the dithering removal. It's not a perfect process
 
 ## Usage
 
-```cargo run --release -- -h```
+
 ```
+Usage:
   -i, --input FILE               (Mandatory) Specify the input file path.
   -o, --output FILE              (Mandatory) Specify the output file path.
   -h, --help                     Prints this help message.
@@ -28,14 +29,11 @@ Below is a zoomed in sample of the dithering removal. It's not a perfect process
   -t, --transparency INTEGER     Specify a non-negative colour distance threshold for transparency optimization. Default: 5
 ```
 
-eg. `cargo run --release -- -i input.gif -o output.gif`
-
 
 ## Showcase
 
-The program output is compared to the file size of running [gifsicle](https://github.com/kohler/gifsicle) with the `-O3` and `--lossy=200` arguments on the same input.
 
-*(May take a few seconds for the images to load)*
+The program output is compared to the file size of running [gifsicle](https://github.com/kohler/gifsicle) with the `-O3 --lossy=200` arguments on the same input.
 
 <table>
 <tr>
@@ -43,24 +41,35 @@ The program output is compared to the file size of running [gifsicle](https://gi
 <th width="10%">Gifsicle</th>
 <th width="45%">Program Output</th>
 </tr>
+        
+
 <tr>
-<td width="45%">28.7 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" width="100%"></td>
-<td width="10%">25.6 MB (-11%)</td>
-<td width="45%">19 MB (-34%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
+<td width="45%">28.7 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" width="100%"></td>
+<td width="10%">25.5 MB (-11%)</td>
+<td width="45%">19.0 MB (-34%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
 </tr>
+                
+
 <tr>
-<td width="45%">3.6 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" width="100%"></td>
-<td width="10%">2.5 MB (-31%)</td>
-<td width="45%">2.1 MB (-42%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
+<td width="45%">78.8 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" width="100%"></td>
+<td width="10%">37.9 MB (-52%)</td>
+<td width="45%">30.9 MB (-61%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
 </tr>
+                
+
 <tr>
-<td width="45%">80.3 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" width="100%"></td>
-<td width="10%">64.2 MB (-20%)</td>
-<td width="45%">41 MB (-49%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
+<td width="45%">80.3 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" width="100%"></td>
+<td width="10%">64.1 MB (-20%)</td>
+<td width="45%">41.0 MB (-49%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
 </tr>
+                
+
 <tr>
-<td width="45%">78.8 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" width="100%"></td>
-<td width="10%">38 MB (-52%)</td>
-<td width="45%">30.9 MB (-61%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
+<td width="45%">3.6 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" width="100%"></td>
+<td width="10%">2.5 MB (-29%)</td>
+<td width="45%">2.1 MB (-42%) <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
 </tr>
+                
 </table>
+
+<!-- TODO: add build insns -->

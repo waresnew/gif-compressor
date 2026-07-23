@@ -8,31 +8,31 @@ use crate::kdtree::{KdTree, Point};
 
 #[derive(Debug, Clone, Copy, Default)]
 ///transparent field is purely a marker; ignored in ord/eq/hash
-pub struct RGB {
+pub struct Rgb {
     pub r: u8,
     pub g: u8,
     pub b: u8,
     pub transparent: bool,
 }
-impl Hash for RGB {
+impl Hash for Rgb {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.r.hash(state);
         self.g.hash(state);
         self.b.hash(state);
     }
 }
-impl PartialEq for RGB {
+impl PartialEq for Rgb {
     fn eq(&self, other: &Self) -> bool {
         self.r == other.r && self.g == other.g && self.b == other.b
     }
 }
-impl Eq for RGB {}
-impl PartialOrd for RGB {
+impl Eq for Rgb {}
+impl PartialOrd for Rgb {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl Ord for RGB {
+impl Ord for Rgb {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         match self.r.cmp(&other.r) {
             Ordering::Equal => match self.g.cmp(&other.g) {
@@ -43,7 +43,7 @@ impl Ord for RGB {
         }
     }
 }
-impl Point<3> for RGB {
+impl Point<3> for Rgb {
     fn get(&self, dim: usize) -> i32 {
         if dim == 0 {
             self.r as i32
@@ -56,13 +56,13 @@ impl Point<3> for RGB {
         }
     }
 }
-pub const RGB_TRANSPARENT: RGB = RGB {
+pub const RGB_TRANSPARENT: Rgb = Rgb {
     r: 0,
     g: 0,
     b: 0,
     transparent: true,
 };
-impl RGB {
+impl Rgb {
     pub fn new(r: u8, g: u8, b: u8) -> Self {
         Self {
             r,
@@ -71,20 +71,20 @@ impl RGB {
             ..Default::default()
         }
     }
-    pub fn average(&self, other: RGB) -> RGB {
-        RGB::new(
+    pub fn average(&self, other: Rgb) -> Rgb {
+        Rgb::new(
             ((self.r as u16 + other.r as u16) / 2) as u8,
             ((self.g as u16 + other.g as u16) / 2) as u8,
             ((self.b as u16 + other.b as u16) / 2) as u8,
         )
     }
-    pub fn distance_sq(&self, other: RGB) -> u32 {
+    pub fn distance_sq(&self, other: Rgb) -> u32 {
         let dr = self.r as i32 - other.r as i32;
         let dg = self.g as i32 - other.g as i32;
         let db = self.b as i32 - other.b as i32;
         (dr * dr + db * db + dg * dg) as u32
     }
-    pub fn distance_luma_sq(&self, other: RGB) -> u32 {
+    pub fn distance_luma_sq(&self, other: Rgb) -> u32 {
         let dr = self.r as f32 - other.r as f32;
         let dg = self.g as f32 - other.g as f32;
         let db = self.b as f32 - other.b as f32;
@@ -96,13 +96,13 @@ impl RGB {
 }
 #[derive(Debug)]
 pub struct Palette {
-    kdtree: KdTree<RGB, 3>,
+    kdtree: KdTree<Rgb, 3>,
 }
 impl Palette {
     pub fn new(palette_raw: &[u8]) -> Self {
-        let mut palette: Vec<RGB> = palette_raw
+        let mut palette: Vec<Rgb> = palette_raw
             .chunks_exact(3)
-            .map(|c| RGB::new(c[0], c[1], c[2]))
+            .map(|c| Rgb::new(c[0], c[1], c[2]))
             .collect();
         palette.sort();
         palette.dedup();
@@ -113,11 +113,11 @@ impl Palette {
     #[inline]
     pub fn get_nearest(
         &self,
-        target: RGB,
-        exclude1: RGB,
-        exclude2: RGB,
-        cache: &mut FxHashMap<RGB, Vec<RGB>>,
-    ) -> Option<RGB> {
+        target: Rgb,
+        exclude1: Rgb,
+        exclude2: Rgb,
+        cache: &mut FxHashMap<Rgb, Vec<Rgb>>,
+    ) -> Option<Rgb> {
         let res = self.kdtree.k_nn(target, 3, cache);
         if let Some(res) = res {
             for &rgb in res {
@@ -134,7 +134,7 @@ impl Palette {
 #[derive(Clone, Debug)]
 /// access a 1d vec in a 2d manner
 pub struct Canvas {
-    pub buffer: Vec<RGB>,
+    pub buffer: Vec<Rgb>,
     pub height: usize,
     pub width: usize,
 }
@@ -147,11 +147,11 @@ impl Canvas {
         }
     }
     #[inline]
-    pub fn get(&self, i: usize, j: usize) -> RGB {
+    pub fn get(&self, i: usize, j: usize) -> Rgb {
         self.buffer[self.width * i + j]
     }
     #[inline]
-    pub fn get_mut(&mut self, i: usize, j: usize) -> &mut RGB {
+    pub fn get_mut(&mut self, i: usize, j: usize) -> &mut Rgb {
         &mut self.buffer[self.width * i + j]
     }
 }
@@ -184,7 +184,7 @@ impl GifFrame {
                 if a == 0 {
                     continue;
                 }
-                *canvas.get_mut(top + i, left + j) = RGB::new(r, g, b);
+                *canvas.get_mut(top + i, left + j) = Rgb::new(r, g, b);
             }
         }
 

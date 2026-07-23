@@ -145,20 +145,20 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::image::RGB;
+    use crate::image::Rgb;
     #[test]
     fn empty_tree_panic() {
-        let tree: KdTree<RGB, 3> = KdTree::new(Vec::new());
+        let tree: KdTree<Rgb, 3> = KdTree::new(Vec::new());
         assert!(
-            tree.k_nn(RGB::default(), 1, &mut FxHashMap::default())
+            tree.k_nn(Rgb::default(), 1, &mut FxHashMap::default())
                 .is_none()
         );
     }
     #[test]
     fn empty_tree() {
-        let tree: KdTree<RGB, 3> = KdTree::new(Vec::new());
+        let tree: KdTree<Rgb, 3> = KdTree::new(Vec::new());
         assert!(
-            tree.k_nn(RGB::default(), 0, &mut FxHashMap::default())
+            tree.k_nn(Rgb::default(), 0, &mut FxHashMap::default())
                 .unwrap()
                 .is_empty()
         );
@@ -166,31 +166,31 @@ mod tests {
     #[test]
     fn regular1() {
         let palette = vec![
-            RGB::new(0, 0, 255),
-            RGB::new(0, 255, 0),
-            RGB::new(255, 0, 0),
-            RGB::new(10, 10, 10),
+            Rgb::new(0, 0, 255),
+            Rgb::new(0, 255, 0),
+            Rgb::new(255, 0, 0),
+            Rgb::new(10, 10, 10),
         ];
         let tree = KdTree::new(palette);
         let mut hash_map = FxHashMap::default();
-        let res = tree.k_nn(RGB::new(30, 0, 0), 3, &mut hash_map).unwrap();
-        assert!(res[0] == RGB::new(10, 10, 10));
-        assert!(res[1] == RGB::new(255, 0, 0));
+        let res = tree.k_nn(Rgb::new(30, 0, 0), 3, &mut hash_map).unwrap();
+        assert!(res[0] == Rgb::new(10, 10, 10));
+        assert!(res[1] == Rgb::new(255, 0, 0));
         assert!(res.len() == 3);
     }
     #[test]
     fn regular2() {
         let palette = vec![
-            RGB::new(2, 1, 1),
-            RGB::new(0, 3, 2),
-            RGB::new(2, 2, 4),
-            RGB::new(5, 0, 0),
+            Rgb::new(2, 1, 1),
+            Rgb::new(0, 3, 2),
+            Rgb::new(2, 2, 4),
+            Rgb::new(5, 0, 0),
         ];
         let tree = KdTree::new(palette);
         let mut hash_map = FxHashMap::default();
-        let res = tree.k_nn(RGB::new(1, 1, 1), 3, &mut hash_map).unwrap();
-        assert!(res[0] == RGB::new(2, 1, 1));
-        assert!(res[1] == RGB::new(0, 3, 2));
-        assert!(res[2] == RGB::new(2, 2, 4));
+        let res = tree.k_nn(Rgb::new(1, 1, 1), 3, &mut hash_map).unwrap();
+        assert!(res[0] == Rgb::new(2, 1, 1));
+        assert!(res[1] == Rgb::new(0, 3, 2));
+        assert!(res[2] == Rgb::new(2, 2, 4));
     }
 }

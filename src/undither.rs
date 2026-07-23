@@ -1,4 +1,4 @@
-use crate::image::{Canvas, Palette, RGB, RGB_TRANSPARENT};
+use crate::image::{Canvas, Palette, RGB_TRANSPARENT, Rgb};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 pub fn undither_frame(canvas: &mut Canvas, palette: &Palette) {
@@ -19,7 +19,7 @@ pub fn undither_frame(canvas: &mut Canvas, palette: &Palette) {
                     let mut sum_g = 0;
                     let mut sum_b = 0;
                     let mut all_transparent = true;
-                    let mut neighbours: Vec<RGB> = Vec::with_capacity(8);
+                    let mut neighbours: Vec<Rgb> = Vec::with_capacity(8);
                     for di in -1..=1_isize {
                         for dj in -1..=1_isize {
                             if di == 0 && dj == 0 {
@@ -94,7 +94,7 @@ pub fn undither_frame(canvas: &mut Canvas, palette: &Palette) {
                         sum_b += weight as u32 * (neighbour.b as u32);
                         weight_len += weight as u32;
                     }
-                    output_row[j] = RGB::new(
+                    output_row[j] = Rgb::new(
                         (sum_r / weight_len) as u8,
                         (sum_g / weight_len) as u8,
                         (sum_b / weight_len) as u8,

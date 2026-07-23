@@ -1,5 +1,5 @@
 use gif_compressor::cli::{Args, parse_args};
-use gif_compressor::image::{GifFrame, RGB};
+use gif_compressor::image::{GifFrame, Rgb};
 use gif_compressor::kdtree::{PairFirstOnly, Point};
 use gif_compressor::utils::{GifQuantizer, UnditheredIter};
 use std::collections::{BTreeMap, BinaryHeap};
@@ -31,7 +31,7 @@ fn main() {
 fn calc_new_palette(
     iter: UnditheredIter,
     args: &Args,
-) -> (Vec<RGB>, Option<Vec<GifFrame>>, (usize, usize)) {
+) -> (Vec<Rgb>, Option<Vec<GifFrame>>, (usize, usize)) {
     let mut colour_freq = BTreeMap::default(); //not hashmap for into_iter() determinism
     let mut kept_frames = Vec::new();
     let height = iter.height;
@@ -53,7 +53,7 @@ fn calc_new_palette(
     }
     (
         median_cut(
-            &mut colour_freq.into_iter().collect::<Vec<(RGB, usize)>>(),
+            &mut colour_freq.into_iter().collect::<Vec<(Rgb, usize)>>(),
             255,
         ),
         if !args.stream {
@@ -66,13 +66,13 @@ fn calc_new_palette(
 }
 
 ///lst:(RGB, freq)
-pub fn median_cut(lst: &mut [(RGB, usize)], max_n: usize) -> Vec<RGB> {
+pub fn median_cut(lst: &mut [(Rgb, usize)], max_n: usize) -> Vec<Rgb> {
     if lst.len() <= max_n {
         return lst.iter().map(|x| x.0).collect();
     }
     type MaxRangeAndDim = (usize, u8);
-    let mut pq: BinaryHeap<PairFirstOnly<MaxRangeAndDim, &mut [(RGB, usize)]>> = BinaryHeap::new();
-    fn calc_max_range(lst: &[(RGB, usize)]) -> (usize, u8) {
+    let mut pq: BinaryHeap<PairFirstOnly<MaxRangeAndDim, &mut [(Rgb, usize)]>> = BinaryHeap::new();
+    fn calc_max_range(lst: &[(Rgb, usize)]) -> (usize, u8) {
         let (mut mn_r, mut mn_g, mut mn_b) = (255_usize, 255_usize, 255_usize);
         let (mut mx_r, mut mx_g, mut mx_b) = (0_usize, 0_usize, 0_usize);
         for (x, _) in lst {
@@ -126,7 +126,7 @@ pub fn median_cut(lst: &mut [(RGB, usize)], max_n: usize) -> Vec<RGB> {
                 b_sum += freq * rgb.b as usize;
                 total += freq;
             }
-            ans.push(RGB::new(
+            ans.push(Rgb::new(
                 (r_sum / total) as u8,
                 (g_sum / total) as u8,
                 (b_sum / total) as u8,

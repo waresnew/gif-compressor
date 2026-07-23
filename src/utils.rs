@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     cli::Args,
-    image::{Canvas, GifFrame, Palette, RGB, RGB_TRANSPARENT},
+    image::{Canvas, GifFrame, Palette, RGB_TRANSPARENT, Rgb},
     kdtree::KdTree,
     undither::undither_frame,
 };
@@ -84,10 +84,10 @@ fn make_decoder(file_name: &str) -> Decoder<File> {
 pub struct GifQuantizer<'a> {
     height: usize,
     width: usize,
-    palette_tree: KdTree<RGB, 3>,
-    palette_nn_cache: FxHashMap<RGB, Vec<RGB>>,
+    palette_tree: KdTree<Rgb, 3>,
+    palette_nn_cache: FxHashMap<Rgb, Vec<Rgb>>,
     is_first_frame: bool,
-    index_map: FxHashMap<RGB, u8>,
+    index_map: FxHashMap<Rgb, u8>,
     transparent_index: u8,
     encoder: Encoder<&'a mut File>,
     prev_canvas: Canvas,
@@ -97,7 +97,7 @@ impl<'a> GifQuantizer<'a> {
     pub fn new(
         output_file: &'a mut File,
         args: &'a Args,
-        new_palette: Vec<RGB>,
+        new_palette: Vec<Rgb>,
         height: usize,
         width: usize,
     ) -> Self {

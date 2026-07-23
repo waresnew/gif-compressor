@@ -4,3 +4,4 @@
 /*.gif
 profile.json.gz
 /examples
+__pycache__

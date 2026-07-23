@@ -7,3 +7,11 @@ edition = "2024"
 gif = "0.14.1"
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
+
+[dev-dependencies]
+criterion = "0.8.2"
+rand = "0.10.2"
+
+[[bench]]
+name = "nearest_neighbour"
+harness = false

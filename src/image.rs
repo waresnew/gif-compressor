@@ -1,11 +1,6 @@
 use std::hash::Hash;
 use std::{cmp::Ordering, hash::Hasher};
 
-use gif::Frame;
-use rustc_hash::FxHashMap;
-
-use crate::kdtree::{KdTree, Point};
-
 #[derive(Debug, Clone, Copy, Default)]
 ///transparent field is purely a marker; ignored in ord/eq/hash
 pub struct Rgb {
@@ -43,19 +38,6 @@ impl Ord for Rgb {
         }
     }
 }
-impl Point<3> for Rgb {
-    fn get(&self, dim: usize) -> i32 {
-        if dim == 0 {
-            self.r as i32
-        } else if dim == 1 {
-            self.g as i32
-        } else if dim == 2 {
-            self.b as i32
-        } else {
-            unreachable!("RGB Point get() given dim=={}", dim);
-        }
-    }
-}
 pub const RGB_TRANSPARENT: Rgb = Rgb {
     r: 0,
     g: 0,
@@ -69,6 +51,17 @@ impl Rgb {
             g,
             b,
             ..Default::default()
+        }
+    }
+    pub fn get(&self, dim: usize) -> i32 {
+        if dim == 0 {
+            self.r as i32
+        } else if dim == 1 {
+            self.g as i32
+        } else if dim == 2 {
+            self.b as i32
+        } else {
+            unreachable!("RGB Point get() given dim=={}", dim);
         }
     }
     pub fn average(&self, other: Rgb) -> Rgb {
@@ -94,51 +87,13 @@ impl Rgb {
         (0.299 * self.r as f32 + 0.587 * self.g as f32 + 0.114 * self.b as f32) as u8
     }
 }
-#[derive(Debug)]
-pub struct Palette {
-    kdtree: KdTree<Rgb, 3>,
-}
-impl Palette {
-    pub fn new(palette_raw: &[u8]) -> Self {
-        let mut palette: Vec<Rgb> = palette_raw
-            .chunks_exact(3)
-            .map(|c| Rgb::new(c[0], c[1], c[2]))
-            .collect();
-        palette.sort();
-        palette.dedup();
-        Self {
-            kdtree: KdTree::new(palette),
-        }
-    }
-    #[inline]
-    pub fn get_nearest(
-        &self,
-        target: Rgb,
-        exclude1: Rgb,
-        exclude2: Rgb,
-        cache: &mut FxHashMap<Rgb, Vec<Rgb>>,
-    ) -> Option<Rgb> {
-        let res = self.kdtree.k_nn(target, 3, cache);
-        if let Some(res) = res {
-            for &rgb in res {
-                if rgb != exclude1 && rgb != exclude2 {
-                    return Some(rgb);
-                }
-            }
-            unreachable!();
-        } else {
-            None
-        }
-    }
-}
 #[derive(Clone, Debug)]
-/// access a 1d vec in a 2d manner
-pub struct Canvas {
+pub struct Image {
     pub buffer: Vec<Rgb>,
     pub height: usize,
     pub width: usize,
 }
-impl Canvas {
+impl Image {
     pub fn blank(height: usize, width: usize) -> Self {
         Self {
             buffer: vec![RGB_TRANSPARENT; height * width],
@@ -146,51 +101,34 @@ impl Canvas {
             width,
         }
     }
-    #[inline]
     pub fn get(&self, i: usize, j: usize) -> Rgb {
         self.buffer[self.width * i + j]
     }
-    #[inline]
     pub fn get_mut(&mut self, i: usize, j: usize) -> &mut Rgb {
         &mut self.buffer[self.width * i + j]
     }
 }
 
-///fully composited gif frame
 #[derive(Clone)]
 pub struct GifFrame {
-    pub canvas: Canvas,
+    pub image: Image,
+    pub palette: Vec<Rgb>,
     pub delay: u16,
+    pub top: usize,
+    pub left: usize,
+    pub local_height: usize,
+    pub local_width: usize,
 }
 impl GifFrame {
-    pub fn canvas_width(&self) -> usize {
-        self.canvas.width
-    }
-    pub fn canvas_height(&self) -> usize {
-        self.canvas.height
-    }
-    pub fn render_frame_to_canvas(frame: &Frame, prev_canvas: &Canvas) -> Self {
-        let mut canvas = prev_canvas.clone();
-        let pixels_raw: Vec<(u8, u8, u8, u8)> = frame
-            .buffer
-            .chunks_exact(4)
-            .map(|c| (c[0], c[1], c[2], c[3]))
-            .collect();
-        let (top, left) = (frame.top as usize, frame.left as usize);
-        let (height, width) = (frame.height as usize, frame.width as usize);
-        for i in 0..height {
-            for j in 0..width {
-                let (r, g, b, a) = pixels_raw[i * width + j];
-                if a == 0 {
-                    continue;
-                }
-                *canvas.get_mut(top + i, left + j) = Rgb::new(r, g, b);
-            }
-        }
-
+    pub fn new(image: Image, palette: Vec<Rgb>, delay: u16) -> Self {
         Self {
-            canvas,
-            delay: frame.delay,
+            top: 0,
+            left: 0,
+            local_height: image.height,
+            local_width: image.width,
+            image,
+            palette,
+            delay,
         }
     }
 }

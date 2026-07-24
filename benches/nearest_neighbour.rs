@@ -1,7 +1,9 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use gif_compressor::{image::Rgb, kdtree::KdTree};
+use gif_compressor::{
+    image::Rgb,
+    nearest_neighbour::{NnSolver, bruteforce::Bruteforce, kdtree::KdTree},
+};
 use rand::{RngExt, SeedableRng, rngs::SmallRng};
-use rustc_hash::FxHashMap;
 use std::{hint::black_box, iter::repeat_with};
 
 fn bench_nn(c: &mut Criterion) {
@@ -14,22 +16,15 @@ fn bench_nn(c: &mut Criterion) {
     c.bench_function("kdtree 500 queries in 256 palette", |b| {
         b.iter(|| {
             for &query in &queries {
-                let mut cache = FxHashMap::default();
-                kdtree.k_nn(query, 1, &mut cache);
+                kdtree.nn(query, None);
             }
         })
     });
+    let bruteforce = Bruteforce::new(palette.clone());
     c.bench_function("bruteforce 500 queries in 256 palette", |b| {
         b.iter(|| {
             for &query in &queries {
-                let mut best_dist = u32::MAX;
-                for &colour in &palette {
-                    let dist = query.distance_sq(colour);
-                    if dist < best_dist {
-                        best_dist = dist;
-                    }
-                }
-                black_box(best_dist);
+                black_box(bruteforce.nn(query, None));
             }
         })
     });

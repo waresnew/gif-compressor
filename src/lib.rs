@@ -6,4 +6,4 @@ pub mod quantizer;
 pub mod reader;
 pub mod transparency;
 pub mod undither;
-pub mod writer; //TODO: do these all need to be pub?
+pub mod writer;

@@ -51,7 +51,7 @@ impl Iterator for GifReader {
         };
         let mut new_frame = self
             .prev_frame
-            .clone() //TODO: check all clones used in this program
+            .clone()
             .unwrap_or(Image::blank(self.height, self.width));
         let pixels_raw: Vec<(u8, u8, u8, u8)> = frame_raw
             .buffer
@@ -73,7 +73,7 @@ impl Iterator for GifReader {
         let palette = if let Some(local) = frame_raw.palette {
             parse_palette(local.as_slice())
         } else if let Some(global) = &self.global_palette {
-            global.clone() //PERF: is this fine?
+            global.clone()
         } else {
             panic!("malformed gif: no global or local palette");
         };

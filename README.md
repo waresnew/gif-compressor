@@ -48,28 +48,28 @@ The file size and runtime are compared to [gifsicle](https://github.com/kohler/g
 <tr>
 <td width="45%">3.6 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" width="100%"></td>
 <td width="10%">2.5 MB (-29%) in 2.0s</td>
-<td width="45%">2.1 MB (-42%) in 1.8s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
+<td width="45%">2.1 MB (-40%) in 3.1s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">28.7 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" width="100%"></td>
-<td width="10%">25.5 MB (-11%) in 21.6s</td>
-<td width="45%">19.0 MB (-34%) in 15.2s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
+<td width="10%">25.5 MB (-11%) in 21.4s</td>
+<td width="45%">19.3 MB (-33%) in 23.6s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">78.8 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" width="100%"></td>
-<td width="10%">37.9 MB (-52%) in 40.8s</td>
-<td width="45%">30.9 MB (-61%) in 20.6s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
+<td width="10%">37.9 MB (-52%) in 40.4s</td>
+<td width="45%">32.4 MB (-59%) in 37.2s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">80.3 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" width="100%"></td>
-<td width="10%">64.1 MB (-20%) in 58.0s</td>
-<td width="45%">41.0 MB (-49%) in 25.7s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
+<td width="10%">64.1 MB (-20%) in 58.2s</td>
+<td width="45%">41.9 MB (-48%) in 49.8s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
 </tr>
                 
 </table>

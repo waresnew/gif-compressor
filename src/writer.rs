@@ -3,14 +3,13 @@ use std::{borrow::Cow, fs::File};
 use ahash::AHashMap;
 use gif::{DisposalMethod, Encoder, Frame};
 
-use crate::image::{GifFrame, Image, Rgb};
+use crate::image::{GifFrame, Rgb};
 
 pub struct GifWriter<'a, I: Iterator<Item = GifFrame>> {
     encoder: Encoder<&'a mut File>,
     frames: I,
     transparent_index: u8,
     index_map: AHashMap<Rgb, u8>,
-    prev_frame: Image,
     width: usize,
     height: usize,
 }
@@ -22,8 +21,6 @@ impl<'a, I: Iterator<Item = GifFrame>> GifWriter<'a, I> {
         width: usize,
         output_file: &'a mut File,
     ) -> Self {
-        //TODO: instead of GifReader,
-        //accept any GifFrame iterator
         let palette_formatted: Vec<u8> = palette
             .iter()
             .flat_map(|x| [x.r, x.g, x.b])
@@ -42,7 +39,6 @@ impl<'a, I: Iterator<Item = GifFrame>> GifWriter<'a, I> {
             index_map,
             transparent_index,
             encoder,
-            prev_frame: Image::blank(height, width),
             frames,
             width,
             height,
@@ -61,7 +57,6 @@ impl<'a, I: Iterator<Item = GifFrame>> GifWriter<'a, I> {
                     indices.push(self.transparent_index);
                 } else {
                     indices.push(self.index_map[&cur]);
-                    *self.prev_frame.get_mut(frame.top + i, frame.left + j) = cur; //TODO: is this needed
                 }
             }
         }

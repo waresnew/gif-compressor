@@ -1,5 +1,5 @@
 use crate::{
-    image::{GifFrame, Rgb},
+    image::GifFrame,
     nearest_neighbour::{ChosenNnSolver, NnSolver},
 };
 

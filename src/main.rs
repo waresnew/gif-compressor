@@ -65,10 +65,10 @@ fn main() {
     };
     let mut transparency_pre_quantize = TransparencyOptimizer::new(args.transparency_threshold);
     let mut transparency_post_quantize = TransparencyOptimizer::new(args.transparency_threshold);
-    let nn_solver = ChosenNnSolver::new(palette.clone());
+    let mut nn_solver = ChosenNnSolver::new(palette.clone());
     let frames = frames.map(|mut frame| {
         transparency_pre_quantize.apply_transparency(&mut frame);
-        quantize(&mut frame, &nn_solver);
+        quantize(&mut frame, &mut nn_solver);
         transparency_post_quantize.apply_transparency(&mut frame);
         frame
     });

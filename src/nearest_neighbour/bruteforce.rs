@@ -11,7 +11,7 @@ impl NnSolver for Bruteforce {
         Self { palette: lst }
     }
 
-    fn nn(&self, target: Rgb, exclude: Option<[Rgb; 2]>) -> Option<Rgb> {
+    fn nn(&mut self, target: Rgb, exclude: Option<[Rgb; 2]>) -> Option<Rgb> {
         let mut best_dist = u32::MAX;
         let mut ans = None;
         for &colour in &self.palette {

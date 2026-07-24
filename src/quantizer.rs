@@ -3,7 +3,7 @@ use crate::{
     nearest_neighbour::{ChosenNnSolver, NnSolver},
 };
 
-pub fn quantize(frame: &mut GifFrame, nn_solver: &ChosenNnSolver) {
+pub fn quantize(frame: &mut GifFrame, nn_solver: &mut ChosenNnSolver) {
     for i in 0..frame.image.height {
         for j in 0..frame.image.width {
             let cur = frame.image.get(i, j);

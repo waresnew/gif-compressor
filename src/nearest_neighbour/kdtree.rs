@@ -1,5 +1,7 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
+use ahash::AHashMap;
+
 use crate::{image::Rgb, nearest_neighbour::NnSolver};
 
 type MaybeNode = Option<Box<Node>>;
@@ -16,6 +18,7 @@ struct Node {
 pub struct KdTree {
     root: MaybeNode,
     size: usize,
+    cache: AHashMap<(Rgb, Option<[Rgb; 2]>), Option<Rgb>>,
 }
 
 impl KdTree {
@@ -82,18 +85,23 @@ impl NnSolver for KdTree {
         Self {
             size: lst.len(),
             root: Self::make_subtree(&mut lst, 0),
+            cache: AHashMap::new(),
         }
     }
-    fn nn(&self, target: Rgb, exclude: Option<[Rgb; 2]>) -> Option<Rgb> {
-        let exclude_len = if exclude.is_some() { 2 } else { 0 };
-        let res = self.k_nn(target, exclude_len + 1);
-        res.into_iter().find(|&x| {
-            if let Some(exclude) = exclude {
-                x != exclude[0] && x != exclude[1]
-            } else {
-                true
-            }
-        })
+    fn nn(&mut self, target: Rgb, exclude: Option<[Rgb; 2]>) -> Option<Rgb> {
+        if !self.cache.contains_key(&(target, exclude)) {
+            let exclude_len = if exclude.is_some() { 2 } else { 0 };
+            let res = self.k_nn(target, exclude_len + 1);
+            let ans = res.into_iter().find(|&x| {
+                if let Some(exclude) = exclude {
+                    x != exclude[0] && x != exclude[1]
+                } else {
+                    true
+                }
+            });
+            self.cache.insert((target, exclude), ans);
+        }
+        self.cache[&(target, exclude)]
     }
 }
 #[cfg(test)]

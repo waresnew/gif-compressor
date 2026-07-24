@@ -10,13 +10,13 @@ pub fn undither_frame(frame: &mut GifFrame) {
     let height = image.height;
     let width = image.width;
     let mut ans = vec![RGB_TRANSPARENT; height * width];
-    let nn_solver = ChosenNnSolver::new(palette.to_vec());
     image
         .buffer
         .par_chunks_exact(width)
         .zip(ans.par_chunks_exact_mut(width))
         .enumerate()
         .for_each(|(i, (input_row, output_row))| {
+            let mut nn_solver = ChosenNnSolver::new(palette.to_vec());
             for (j, cur) in input_row.iter().enumerate() {
                 let mut weight_len: u32 = 0;
                 let mut sum_r = 0;

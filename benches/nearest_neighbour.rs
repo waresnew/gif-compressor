@@ -12,7 +12,7 @@ fn bench_nn(c: &mut Criterion) {
     let mut random_rgb = || Rgb::new(rng.random(), rng.random(), rng.random());
     let palette: Vec<Rgb> = repeat_with(&mut random_rgb).take(256).collect();
     let queries: Vec<Rgb> = repeat_with(&mut random_rgb).take(500).collect();
-    let kdtree = KdTree::new(palette.clone());
+    let mut kdtree = KdTree::new(palette.clone());
     c.bench_function("kdtree 500 queries in 256 palette", |b| {
         b.iter(|| {
             for &query in &queries {
@@ -20,7 +20,7 @@ fn bench_nn(c: &mut Criterion) {
             }
         })
     });
-    let bruteforce = Bruteforce::new(palette.clone());
+    let mut bruteforce = Bruteforce::new(palette.clone());
     c.bench_function("bruteforce 500 queries in 256 palette", |b| {
         b.iter(|| {
             for &query in &queries {

@@ -7,3 +7,6 @@ readme:
 
 download-examples:
     uv run ./scripts/download_examples.py
+
+regen-examples:
+    uv run ./scripts/regen_examples.py

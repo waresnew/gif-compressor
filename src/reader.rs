@@ -4,17 +4,13 @@ use gif::{Decoder, DisposalMethod};
 
 use crate::image::{GifFrame, Image, RGB_TRANSPARENT, Rgb};
 
-pub enum GifFrameTransformer {
-    Default(Box<dyn Fn(&mut GifFrame)>),
-    NeedsPrev(Box<dyn Fn(&mut GifFrame, Option<&Image>)>),
-}
 pub struct GifReader {
     height: usize,
     width: usize,
     global_palette: Option<Vec<Rgb>>,
     prev_frame: Option<Image>,
     decoder_iter: <Decoder<File> as IntoIterator>::IntoIter,
-    transforms: Vec<GifFrameTransformer>,
+    transforms: Vec<fn(&mut GifFrame)>,
 }
 impl GifReader {
     pub fn new(input: String) -> Self {
@@ -41,7 +37,8 @@ impl GifReader {
     pub fn height(&self) -> usize {
         self.height
     }
-    pub fn apply_transform(&mut self, f: GifFrameTransformer) {
+    /// these transforms are different than just map()'ing self bc these will influence self.prev_frame
+    pub fn apply_transform(&mut self, f: fn(&mut GifFrame)) {
         self.transforms.push(f);
     }
 }
@@ -82,14 +79,7 @@ impl Iterator for GifReader {
         };
         let mut frame = GifFrame::new(new_frame, palette, frame_raw.delay);
         for transform in &self.transforms {
-            match transform {
-                GifFrameTransformer::Default(f) => {
-                    f(&mut frame);
-                }
-                GifFrameTransformer::NeedsPrev(f) => {
-                    f(&mut frame, self.prev_frame.as_ref());
-                }
-            }
+            transform(&mut frame);
         }
         let mut new_prev = frame.clone();
         for i in 0..self.height {

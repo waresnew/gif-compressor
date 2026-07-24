@@ -22,7 +22,6 @@ pub fn undither_frame(frame: &mut GifFrame) {
                 let mut sum_r = 0;
                 let mut sum_g = 0;
                 let mut sum_b = 0;
-                let mut all_transparent = true;
                 let mut neighbours: Vec<Rgb> = Vec::with_capacity(8);
                 for di in -1..=1_isize {
                     for dj in -1..=1_isize {
@@ -32,16 +31,8 @@ pub fn undither_frame(frame: &mut GifFrame) {
                         let ni = (i as isize + di).clamp(0, height as isize - 1) as usize;
                         let nj = (j as isize + dj).clamp(0, width as isize - 1) as usize;
 
-                        let neighbour = image.get(ni, nj);
-                        if !neighbour.transparent {
-                            all_transparent = false;
-                        }
-                        neighbours.push(neighbour);
+                        neighbours.push(image.get(ni, nj));
                     }
-                }
-                if all_transparent && cur.transparent {
-                    output_row[j] = input_row[j];
-                    continue;
                 }
                 let prewitt = prewitt_3x3_mag([
                     [

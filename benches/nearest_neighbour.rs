@@ -1,7 +1,8 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use gif_compressor::{
+    NnSolver,
+    bench_impls::{bruteforce::Bruteforce, kdtree::KdTree},
     image::Rgb,
-    nearest_neighbour::{NnSolver, bruteforce::Bruteforce, kdtree::KdTree},
 };
 use rand::{RngExt, SeedableRng, rngs::SmallRng};
 use std::{hint::black_box, iter::repeat_with};

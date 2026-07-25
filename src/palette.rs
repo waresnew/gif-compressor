@@ -56,7 +56,7 @@ fn median_cut(lst: &mut [Rgb], max_n: usize) -> Vec<Rgb> {
             ans.push(slice[0]);
             continue;
         }
-        let mid = slice.len() / 2; //unique colour prio
+        let mid = slice.len() / 2;
         slice.select_nth_unstable_by_key(mid, |x| x.get(split_dim as usize));
         let (left, right) = slice.split_at_mut(mid);
         if !left.is_empty() {

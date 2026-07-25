@@ -1,4 +1,5 @@
-use gif_compressor::cli::{Args, parse_args};
+use clap::Parser;
+use gif_compressor::cli::Cli;
 use gif_compressor::image::GifFrame;
 use gif_compressor::nearest_neighbour::{ChosenNnSolver, NnSolver};
 use gif_compressor::palette::gen_palette;
@@ -7,7 +8,6 @@ use gif_compressor::reader::GifReader;
 use gif_compressor::transparency::TransparencyOptimizer;
 use gif_compressor::undither::undither_frame;
 use gif_compressor::writer::GifWriter;
-use std::env;
 use std::fs::File;
 use std::time::Instant;
 use std::vec::IntoIter;
@@ -26,14 +26,14 @@ impl Iterator for GifFrameIterator {
         }
     }
 }
-fn create_reader(args: &Args) -> GifReader {
+fn create_reader(args: &Cli) -> GifReader {
     let mut reader = GifReader::new(args.input.clone());
     reader.apply_transform(undither_frame);
     reader
 }
 fn main() {
     let start = Instant::now();
-    let args = parse_args(env::args());
+    let args = Cli::parse();
 
     let mut output_file = File::create(&args.output).unwrap();
     let reader = create_reader(&args);

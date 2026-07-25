@@ -186,9 +186,10 @@ The file size and runtime are compared to [gifsicle](https://github.com/kohler/g
 
 
 def gen_cli_usage() -> str:
+    cmd = "cargo run --release -- --help"
     output = (
-        subprocess.run(
-            ["cargo", "run", "--release", "--", "-h"],
+        subprocess.run(  # noqa: S603
+            cmd.split(" "),
             check=True,
             capture_output=True,
         )
@@ -197,6 +198,7 @@ def gen_cli_usage() -> str:
     )
     return f"""
 ```
+> {cmd}
 {output}
 ```
 """

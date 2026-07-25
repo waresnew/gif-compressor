@@ -23,12 +23,24 @@ Below is a zoomed in sample of the dithering removal. It's not a perfect process
 
 
 ```
-Usage:
-  -i, --input FILE               (Mandatory) Specify the input file path.
-  -o, --output FILE              (Mandatory) Specify the output file path.
-  -h, --help                     Prints this help message.
-  -s, --stream                   Instructs the program to not store all GIF frames in memory at once. Leads to reduced peak memory usage at the cost of longer runtime.
-  -t, --transparency INTEGER     Specify a non-negative colour distance threshold for transparency optimization. Default: 5
+> cargo run --release -- --help
+GIF compression by undoing dithering
+
+Usage: gif-compressor [OPTIONS] --input <INPUT> --output <OUTPUT>
+
+Options:
+  -i, --input <INPUT>
+          The input file path
+  -o, --output <OUTPUT>
+          The output file path
+  -s, --stream
+          Instructs the program to not store all GIF frames in memory at once. Leads to reduced peak memory usage at the cost of longer runtime
+  -t, --transparency-threshold <TRANSPARENCY_THRESHOLD>
+          Specify a non-negative colour distance threshold for transparency optimization [default: 5]
+  -h, --help
+          Print help
+  -V, --version
+          Print version
 ```
 
 
@@ -48,28 +60,28 @@ The file size and runtime are compared to [gifsicle](https://github.com/kohler/g
 <tr>
 <td width="45%">3.6 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" width="100%"></td>
 <td width="10%">2.5 MB (-29%) in 2.0s</td>
-<td width="45%">2.1 MB (-40%) in 3.1s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
+<td width="45%">2.1 MB (-40%) in 2.7s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">28.7 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" width="100%"></td>
-<td width="10%">25.5 MB (-11%) in 21.4s</td>
-<td width="45%">19.3 MB (-33%) in 23.6s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
+<td width="10%">25.5 MB (-11%) in 21.1s</td>
+<td width="45%">19.3 MB (-33%) in 22.1s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">78.8 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" width="100%"></td>
-<td width="10%">37.9 MB (-52%) in 40.4s</td>
-<td width="45%">32.4 MB (-59%) in 37.2s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
+<td width="10%">37.9 MB (-52%) in 40.2s</td>
+<td width="45%">32.4 MB (-59%) in 35.2s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">80.3 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" width="100%"></td>
-<td width="10%">64.1 MB (-20%) in 58.2s</td>
-<td width="45%">41.9 MB (-48%) in 49.8s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
+<td width="10%">64.1 MB (-20%) in 59.3s</td>
+<td width="45%">41.9 MB (-48%) in 47.9s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
 </tr>
                 
 </table>

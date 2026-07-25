@@ -28,7 +28,7 @@ fn median_cut(lst: &mut [Rgb], max_n: usize) -> Vec<Rgb> {
     }
     type MaxRangeAndDim = (usize, u8); //what was the max range, and which dim did it correspond to
     let mut pq: BinaryHeap<(MaxRangeAndDim, &mut [Rgb])> = BinaryHeap::new();
-    fn calc_max_range(lst: &[Rgb]) -> (usize, u8) {
+    fn calc_max_range(lst: &[Rgb]) -> MaxRangeAndDim {
         let (mut mn_r, mut mn_g, mut mn_b) = (255_usize, 255_usize, 255_usize);
         let (mut mx_r, mut mx_g, mut mx_b) = (0_usize, 0_usize, 0_usize);
         for x in lst {

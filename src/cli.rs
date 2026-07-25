@@ -1,4 +1,5 @@
 use clap::Parser;
+use clap_verbosity_flag::{Verbosity, WarnLevel};
 
 #[derive(Debug, Clone, Parser)]
 #[command(version, about, long_about=None)]
@@ -18,4 +19,7 @@ pub struct Cli {
     /// Specify a non-negative colour distance threshold for transparency optimization.
     #[arg(short, long, default_value_t = 5)]
     pub transparency_threshold: u32,
+
+    #[command(flatten)]
+    pub verbosity: Verbosity<WarnLevel>,
 }

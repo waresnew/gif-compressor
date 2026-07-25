@@ -37,6 +37,10 @@ Options:
           Instructs the program to not store all GIF frames in memory at once. Leads to reduced peak memory usage at the cost of longer runtime
   -t, --transparency-threshold <TRANSPARENCY_THRESHOLD>
           Specify a non-negative colour distance threshold for transparency optimization [default: 5]
+  -v, --verbose...
+          Increase logging verbosity
+  -q, --quiet...
+          Decrease logging verbosity
   -h, --help
           Print help
   -V, --version

@@ -1,6 +1,6 @@
 [default]
-run input output:
-    cargo run --release -- -i {{input}} -o {{output}}
+run *args:
+    cargo run --release -- {{args}}
 
 readme:
     uv run ./scripts/gen_readme.py

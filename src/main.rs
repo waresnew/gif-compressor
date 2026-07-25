@@ -7,6 +7,7 @@ use gif_compressor::transparency::TransparencyOptimizer;
 use gif_compressor::undither;
 use gif_compressor::writer::GifWriter;
 use gif_compressor::{ChosenNnSolver, NnSolver};
+use log::info;
 use std::fs::File;
 use std::time::Instant;
 
@@ -23,23 +24,27 @@ struct GenUnditheredFramesOutput {
 }
 
 fn main() {
-    env_logger::init();
     let start = Instant::now();
-    let args = Cli::parse();
+    let cli = Cli::parse();
+    env_logger::Builder::new()
+        .filter_level(cli.verbosity.log_level_filter())
+        .init();
 
-    let mut output_file = File::create(&args.output).unwrap();
     let GenUnditheredFramesOutput {
         first_pass,
         second_pass,
         height,
         width,
-    } = gen_undithered_frames(args.input, args.stream);
-    let palette = gen_undithered_palette(first_pass, height, width, args.transparency_threshold);
+    } = gen_undithered_frames(cli.input, cli.stream);
+    let palette =
+        gen_palette_with_transparency(first_pass, height, width, cli.transparency_threshold);
     let quantized_frames =
-        quantize_with_transparency(second_pass, palette.clone(), args.transparency_threshold);
+        quantize_with_transparency(second_pass, palette.clone(), cli.transparency_threshold);
+
+    let mut output_file = File::create(&cli.output).unwrap();
     let mut writer = GifWriter::new(quantized_frames, palette, height, width, &mut output_file);
     while writer.write_frame() {}
-    println!(
+    info!(
         "finished in {:.1}s",
         start.elapsed().as_millis() as f32 / 1000.0
     );
@@ -77,7 +82,7 @@ fn gen_undithered_frames(input: String, stream: bool) -> GenUnditheredFramesOutp
         }
     }
 }
-fn gen_undithered_palette(
+fn gen_palette_with_transparency(
     frames: impl Iterator<Item = GifFrame>,
     height: usize,
     width: usize,

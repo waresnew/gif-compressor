@@ -25,4 +25,8 @@ Below is a zoomed in sample of the dithering removal. It's not a perfect process
 
 {{ gif_bench }}
 
-<!-- TODO: add build insns -->
+## Building
+
+You can find the build tasks in the justfile, which mostly just call Python scripts. Note that the example GIF files don't come bundled with the repo for size reasons, so you have to run `just download-examples`.
+
+If introducing changes that change the program output, run `just regen-examples` before regenerating the README benchmark. This is because the readme task will compare the checksums between the expected and generated output and throw on mismatch.

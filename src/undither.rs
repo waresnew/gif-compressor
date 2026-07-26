@@ -4,7 +4,13 @@ use crate::{
 };
 use rayon::prelude::*;
 
-pub fn undither_frame(frame: &mut GifFrame) {
+pub fn undither_frames(frames: impl Iterator<Item = GifFrame>) -> impl Iterator<Item = GifFrame> {
+    frames.map(|mut frame| {
+        undither_frame(&mut frame);
+        frame
+    })
+}
+fn undither_frame(frame: &mut GifFrame) {
     let image = &mut frame.image;
     let palette = &frame.palette;
     let height = image.height;

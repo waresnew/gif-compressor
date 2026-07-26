@@ -11,7 +11,16 @@ impl TransparencyOptimizer {
             threshold,
         }
     }
-    pub fn apply_transparency(&mut self, frame: &mut GifFrame) {
+    pub fn apply_transparency_all(
+        &mut self,
+        frames: impl Iterator<Item = GifFrame>,
+    ) -> impl Iterator<Item = GifFrame> {
+        frames.map(|mut frame| {
+            self.apply_transparency_once(&mut frame);
+            frame
+        })
+    }
+    fn apply_transparency_once(&mut self, frame: &mut GifFrame) {
         let Some(prev_frame) = &self.prev_frame else {
             self.prev_frame = Some(frame.clone().image);
             return;

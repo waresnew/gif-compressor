@@ -10,7 +10,6 @@ pub struct GifReader {
     global_palette: Option<Vec<Rgb>>,
     prev_frame: Option<Image>,
     decoder_iter: <Decoder<File> as IntoIterator>::IntoIter,
-    transforms: Vec<fn(&mut GifFrame)>,
 }
 impl GifReader {
     pub fn new(input: String) -> Self {
@@ -28,7 +27,6 @@ impl GifReader {
             prev_frame: None,
             global_palette,
             decoder_iter,
-            transforms: Vec::new(),
         }
     }
     pub fn width(&self) -> usize {
@@ -36,10 +34,6 @@ impl GifReader {
     }
     pub fn height(&self) -> usize {
         self.height
-    }
-    /// these transforms are different than just map()'ing self bc these will influence self.prev_frame
-    pub fn apply_transform(&mut self, f: fn(&mut GifFrame)) {
-        self.transforms.push(f);
     }
 }
 impl Iterator for GifReader {
@@ -77,10 +71,7 @@ impl Iterator for GifReader {
         } else {
             panic!("malformed gif: no global or local palette");
         };
-        let mut frame = GifFrame::new(new_frame, palette, frame_raw.delay);
-        for transform in &self.transforms {
-            transform(&mut frame);
-        }
+        let frame = GifFrame::new(new_frame, palette, frame_raw.delay);
         let mut new_prev = frame.clone();
         for i in 0..self.height {
             for j in 0..self.width {

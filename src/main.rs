@@ -1,12 +1,10 @@
 use clap::Parser;
-use gif_compressor::image::{GifFrame, Rgb};
-use gif_compressor::palette;
+use gif_compressor::image::GifFrame;
 use gif_compressor::quantizer;
 use gif_compressor::reader::GifReader;
 use gif_compressor::transparency::TransparencyOptimizer;
-use gif_compressor::undither;
 use gif_compressor::writer::GifWriter;
-use gif_compressor::{ChosenNnSolver, NnSolver};
+use gif_compressor::{palette, undither};
 use log::info;
 use std::fs::File;
 use std::time::Instant;
@@ -36,13 +34,22 @@ fn main() {
         height,
         width,
     } = gen_undithered_frames(cli.input, cli.stream);
-    let palette =
-        gen_palette_with_transparency(first_pass, height, width, cli.transparency_threshold);
-    let quantized_frames =
-        quantize_with_transparency(second_pass, palette.clone(), cli.transparency_threshold);
+
+    let palette = palette::gen_palette(first_pass, height, width);
+
+    let quantized_frames = quantizer::quantize_frames(second_pass, palette.clone());
+
+    let mut transparency = TransparencyOptimizer::new(cli.transparency_threshold);
+    let transparency_optimized = transparency.apply_transparency_all(quantized_frames);
 
     let mut output_file = File::create(&cli.output).unwrap();
-    let mut writer = GifWriter::new(quantized_frames, palette, height, width, &mut output_file);
+    let mut writer = GifWriter::new(
+        transparency_optimized,
+        palette,
+        height,
+        width,
+        &mut output_file,
+    );
     while writer.write_frame() {}
     info!(
         "finished in {:.1}s",
@@ -50,19 +57,13 @@ fn main() {
     );
 }
 
-fn create_undithered_reader(input: String) -> GifReader {
-    let mut reader = GifReader::new(input);
-    reader.apply_transform(undither::undither_frame);
-    reader
-}
-
 /// handles the stream option
 fn gen_undithered_frames(input: String, stream: bool) -> GenUnditheredFramesOutput {
     if stream {
-        let reader = create_undithered_reader(input);
+        let reader = GifReader::new(input);
         let height = reader.height();
         let width = reader.width();
-        let frames = reader.collect::<Vec<GifFrame>>();
+        let frames = undither::undither_frames(reader).collect::<Vec<GifFrame>>();
         GenUnditheredFramesOutput {
             first_pass: Box::new(frames.clone().into_iter()),
             second_pass: Box::new(frames.into_iter()),
@@ -70,46 +71,15 @@ fn gen_undithered_frames(input: String, stream: bool) -> GenUnditheredFramesOutp
             width,
         }
     } else {
-        let reader1 = create_undithered_reader(input.clone());
-        let reader2 = create_undithered_reader(input);
+        let reader1 = GifReader::new(input.clone());
+        let reader2 = GifReader::new(input);
         let height = reader1.height();
         let width = reader1.width();
         GenUnditheredFramesOutput {
-            first_pass: Box::new(reader1),
-            second_pass: Box::new(reader2),
+            first_pass: Box::new(undither::undither_frames(reader1)),
+            second_pass: Box::new(undither::undither_frames(reader2)),
             height,
             width,
         }
     }
-}
-fn gen_palette_with_transparency(
-    frames: impl Iterator<Item = GifFrame>,
-    height: usize,
-    width: usize,
-    transparency_threshold: u32,
-) -> Vec<Rgb> {
-    let mut transparency = TransparencyOptimizer::new(transparency_threshold);
-    palette::gen_palette(
-        frames.map(|mut frame| {
-            transparency.apply_transparency(&mut frame);
-            frame
-        }),
-        height,
-        width,
-    )
-}
-fn quantize_with_transparency(
-    frames: impl Iterator<Item = GifFrame>,
-    palette: Vec<Rgb>,
-    threshold: u32,
-) -> impl Iterator<Item = GifFrame> {
-    let mut transparency_pre_quantize = TransparencyOptimizer::new(threshold);
-    let mut transparency_post_quantize = TransparencyOptimizer::new(threshold);
-    let mut nn_solver = ChosenNnSolver::new(palette);
-    frames.map(move |mut frame| {
-        transparency_pre_quantize.apply_transparency(&mut frame);
-        quantizer::quantize(&mut frame, &mut nn_solver);
-        transparency_post_quantize.apply_transparency(&mut frame);
-        frame
-    })
 }

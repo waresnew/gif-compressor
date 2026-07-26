@@ -128,10 +128,12 @@ def gen_gif_bench() -> str:
         input_files = [
             x
             for x in EXAMPLES_PATH.iterdir()
-            if x.is_file() and not x.name.endswith("_output.gif")
+            if x.is_file()
+            and x.name.endswith(".gif")
+            and not x.name.endswith("_output.gif")
         ]
-        gifsicle_timings = run_gifsicle(input_files, tmp_dir)
         program_timings = run_program(input_files, tmp_dir)
+        gifsicle_timings = run_gifsicle(input_files, tmp_dir)
         rows: list[tuple[float, str]] = []
         for input_file in input_files:
             input_size = input_file.stat().st_size / 1000000

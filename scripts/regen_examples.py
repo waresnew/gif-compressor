@@ -14,7 +14,7 @@ def main() -> None:
     )
     if confirm == "y":
         for file in EXAMPLES_PATH.iterdir():
-            if not file.name.endswith("_output.gif"):
+            if file.name.endswith(".gif") and not file.name.endswith("_output.gif"):
                 logger.info("Running on %s", file.name)
 
                 subprocess.run(  # noqa: S603

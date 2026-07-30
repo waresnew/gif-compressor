@@ -71,7 +71,7 @@ async fn run_shader_with_frames_async(
     let (device, queue) = adapter
         .request_device(&DeviceDescriptor {
             required_limits: Limits {
-                max_storage_buffer_binding_size: adapter_limits.max_storage_buffer_binding_size, //TODO: chunk it up
+                max_storage_buffer_binding_size: adapter_limits.max_storage_buffer_binding_size,
                 max_buffer_size: adapter_limits.max_buffer_size,
                 ..Default::default()
             },

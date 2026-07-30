@@ -30,6 +30,7 @@ fn main() {
 
     if cli.chunk_size == 0 {
         cli.chunk_size = gpu::get_highest_chunk_size();
+        info!("inferring chunk_size = {}", cli.chunk_size);
     }
     let GenUnditheredChunksOutput {
         first_pass,
@@ -39,13 +40,13 @@ fn main() {
     } = gen_undithered_frames(cli.input, cli.chunk_size);
     let palette = palette::gen_palette(first_pass, height, width);
 
-    let quantized_frames = quantizer::quantize_frames(second_pass, palette.clone()).flatten();
+    let quantized_frames = second_pass.flat_map(|chunk| quantizer::quantize_chunk(chunk, &palette));
     let mut transparency = TransparencyOptimizer::new(cli.transparency_threshold);
     let transparency_optimized = transparency.apply_transparency_all(quantized_frames);
     let mut output_file = File::create(&cli.output).unwrap();
     let mut writer = GifWriter::new(
         transparency_optimized,
-        palette,
+        palette.clone(),
         height,
         width,
         &mut output_file,

@@ -1,30 +1,17 @@
 use crate::{
-    image::{GifFrame, Rgb},
-    nearest_neighbour::{ChosenNnSolver, NnSolver},
+    gpu,
+    image::{GifFrame, Image, Rgb},
 };
-
-//TODO: use gpu
-pub fn quantize_frames(
-    chunks: impl Iterator<Item = Vec<GifFrame>>,
-    palette: Vec<Rgb>,
-) -> impl Iterator<Item = Vec<GifFrame>> {
-    let mut nn_solver = ChosenNnSolver::new(palette);
-    chunks.map(move |chunk| {
-        chunk
-            .into_iter()
-            .map(|mut frame| {
-                quantize_frame(&mut frame, &mut nn_solver);
-                frame
-            })
-            .collect()
-    })
-}
-fn quantize_frame(frame: &mut GifFrame, nn_solver: &mut ChosenNnSolver) {
-    for i in 0..frame.image.height {
-        for j in 0..frame.image.width {
-            let cur = frame.image.get(i, j);
-            let best = nn_solver.nn(cur, None).unwrap();
-            *frame.image.get_mut(i, j) = best;
-        }
-    }
+pub fn quantize_chunk(chunk: Vec<GifFrame>, palette: &Vec<Rgb>) -> Vec<GifFrame> {
+    let images: Vec<&Image> = chunk.iter().map(|frame| &frame.image).collect();
+    let palettes = vec![palette; chunk.len()];
+    let output_images = gpu::run_shader_with_frames("nn_in_palette", images, palettes);
+    chunk
+        .into_iter()
+        .zip(output_images)
+        .map(|(mut frame, output_image)| {
+            frame.image = output_image;
+            frame
+        })
+        .collect()
 }

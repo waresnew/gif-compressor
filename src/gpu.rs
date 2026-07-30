@@ -67,11 +67,12 @@ async fn run_shader_with_frames_async(
         .request_adapter(&RequestAdapterOptions::default())
         .await
         .unwrap();
+    let adapter_limits = adapter.limits();
     let (device, queue) = adapter
         .request_device(&DeviceDescriptor {
             required_limits: Limits {
-                max_storage_buffer_binding_size: 1073741824, //TODO: chunk it up
-                max_buffer_size: 1073741824,
+                max_storage_buffer_binding_size: adapter_limits.max_storage_buffer_binding_size, //TODO: chunk it up
+                max_buffer_size: adapter_limits.max_buffer_size,
                 ..Default::default()
             },
             ..Default::default()
@@ -205,4 +206,19 @@ async fn run_shader_with_frames_async(
             }
         })
         .collect()
+}
+pub fn get_highest_chunk_size() -> usize {
+    pollster::block_on(get_highest_chunk_size_async())
+}
+async fn get_highest_chunk_size_async() -> usize {
+    let instance = wgpu::Instance::default();
+    let adapter = instance
+        .request_adapter(&RequestAdapterOptions::default())
+        .await
+        .unwrap();
+    let adapter_limits = adapter.limits();
+    adapter_limits
+        .max_storage_buffer_binding_size
+        .min(adapter_limits.max_buffer_size)
+        .min(usize::MAX as u64) as usize
 }

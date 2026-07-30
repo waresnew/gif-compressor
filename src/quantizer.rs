@@ -5,13 +5,18 @@ use crate::{
 
 //TODO: use gpu
 pub fn quantize_frames(
-    frames: impl Iterator<Item = GifFrame>,
+    chunks: impl Iterator<Item = Vec<GifFrame>>,
     palette: Vec<Rgb>,
-) -> impl Iterator<Item = GifFrame> {
+) -> impl Iterator<Item = Vec<GifFrame>> {
     let mut nn_solver = ChosenNnSolver::new(palette);
-    frames.map(move |mut frame| {
-        quantize_frame(&mut frame, &mut nn_solver);
-        frame
+    chunks.map(move |chunk| {
+        chunk
+            .into_iter()
+            .map(|mut frame| {
+                quantize_frame(&mut frame, &mut nn_solver);
+                frame
+            })
+            .collect()
     })
 }
 fn quantize_frame(frame: &mut GifFrame, nn_solver: &mut ChosenNnSolver) {

@@ -1,4 +1,5 @@
-mod gpu;
+pub mod chunked_iter;
+pub mod gpu;
 pub mod image;
 mod nearest_neighbour;
 pub mod palette;

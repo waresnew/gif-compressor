@@ -3,16 +3,18 @@ use std::collections::{BTreeSet, BinaryHeap};
 use crate::image::{GifFrame, Rgb};
 
 pub fn gen_palette(
-    iter: impl IntoIterator<Item = GifFrame>,
+    chunks: impl Iterator<Item = Vec<GifFrame>>,
     height: usize,
     width: usize,
 ) -> Vec<Rgb> {
     let mut colour_freq = BTreeSet::default(); //not hashset for into_iter() determinism
-    for frame in iter {
-        for i in 0..height {
-            for j in 0..width {
-                let cur = frame.image.get(i, j);
-                colour_freq.insert(cur);
+    for chunk in chunks {
+        for frame in chunk {
+            for i in 0..height {
+                for j in 0..width {
+                    let cur = frame.image.get(i, j);
+                    colour_freq.insert(cur);
+                }
             }
         }
     }

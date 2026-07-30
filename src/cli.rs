@@ -12,9 +12,10 @@ pub struct Cli {
     #[arg(short, long)]
     pub output: String,
 
-    /// Instructs the program to not store all GIF frames in memory at once. Leads to reduced peak memory usage at the cost of longer runtime.
-    #[arg(short, long, default_value_t = false)]
-    pub stream: bool,
+    /// How many frames to send to the GPU at a time. Setting it to 0 will use as much memory as your
+    /// GPU allows in a storage buffer.
+    #[arg(short, long, default_value_t = 0)]
+    pub chunk_size: usize,
 
     /// Specify a non-negative colour distance threshold for transparency optimization.
     #[arg(short, long, default_value_t = 5)]

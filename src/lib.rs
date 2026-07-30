@@ -1,3 +1,4 @@
+mod gpu;
 pub mod image;
 mod nearest_neighbour;
 pub mod palette;

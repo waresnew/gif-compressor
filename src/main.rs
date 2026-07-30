@@ -63,7 +63,7 @@ fn gen_undithered_frames(input: String, stream: bool) -> GenUnditheredFramesOutp
         let reader = GifReader::new(input);
         let height = reader.height();
         let width = reader.width();
-        let frames = undither::undither_frames(reader).collect::<Vec<GifFrame>>();
+        let frames = undither::undither_frames(reader, stream).collect::<Vec<GifFrame>>();
         GenUnditheredFramesOutput {
             first_pass: Box::new(frames.clone().into_iter()),
             second_pass: Box::new(frames.into_iter()),
@@ -76,8 +76,8 @@ fn gen_undithered_frames(input: String, stream: bool) -> GenUnditheredFramesOutp
         let height = reader1.height();
         let width = reader1.width();
         GenUnditheredFramesOutput {
-            first_pass: Box::new(undither::undither_frames(reader1)),
-            second_pass: Box::new(undither::undither_frames(reader2)),
+            first_pass: Box::new(undither::undither_frames(reader1, stream)),
+            second_pass: Box::new(undither::undither_frames(reader2, stream)),
             height,
             width,
         }

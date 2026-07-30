@@ -12,9 +12,6 @@ pub fn gen_palette(
         for i in 0..height {
             for j in 0..width {
                 let cur = frame.image.get(i, j);
-                if cur.transparent {
-                    continue;
-                }
                 colour_freq.insert(cur);
             }
         }

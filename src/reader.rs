@@ -2,8 +2,9 @@ use std::fs::File;
 
 use gif::{Decoder, DisposalMethod};
 
-use crate::image::{GifFrame, Image, RGB_TRANSPARENT, Rgb};
+use crate::image::{GifFrame, Image, Rgb};
 
+/// each gifframe created will have the same height/width
 pub struct GifReader {
     height: usize,
     width: usize,
@@ -77,7 +78,7 @@ impl Iterator for GifReader {
             for j in 0..self.width {
                 *new_prev.image.get_mut(i, j) = match frame_raw.dispose {
                     DisposalMethod::Any | DisposalMethod::Keep => new_prev.image.get(i, j),
-                    DisposalMethod::Background => RGB_TRANSPARENT,
+                    DisposalMethod::Background => Rgb::default(),
                     DisposalMethod::Previous => self
                         .prev_frame
                         .as_ref()

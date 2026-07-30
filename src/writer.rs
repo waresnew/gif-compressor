@@ -3,19 +3,19 @@ use std::{borrow::Cow, fs::File};
 use ahash::AHashMap;
 use gif::{DisposalMethod, Encoder, Frame};
 
-use crate::image::{GifFrame, Rgb};
+use crate::{image::Rgb, transparency::TransparencyOutput};
 
-pub struct GifWriter<'a, I: Iterator<Item = GifFrame>> {
+pub struct GifWriter<'a, I: Iterator<Item = TransparencyOutput>> {
     encoder: Encoder<&'a mut File>,
-    frames: I,
+    transparency_output: I,
     transparent_index: u8,
     index_map: AHashMap<Rgb, u8>,
     width: usize,
     height: usize,
 }
-impl<'a, I: Iterator<Item = GifFrame>> GifWriter<'a, I> {
+impl<'a, I: Iterator<Item = TransparencyOutput>> GifWriter<'a, I> {
     pub fn new(
-        frames: I,
+        transparency_output: I,
         palette: Vec<Rgb>,
         height: usize,
         width: usize,
@@ -39,21 +39,23 @@ impl<'a, I: Iterator<Item = GifFrame>> GifWriter<'a, I> {
             index_map,
             transparent_index,
             encoder,
-            frames,
+            transparency_output,
             width,
             height,
         }
     }
     pub fn write_frame(&mut self) -> bool {
-        let Some(frame) = self.frames.next() else {
+        let Some((frame, transparent_pixels)) = self.transparency_output.next() else {
             return false;
         };
         let mut indices: Vec<u8> = Vec::with_capacity(self.width * self.height);
 
         for i in 0..frame.local_height {
             for j in 0..frame.local_width {
-                let cur = frame.image.get(frame.top + i, frame.left + j);
-                if cur.transparent {
+                let global_i = frame.top + i;
+                let global_j = frame.left + j;
+                let cur = frame.image.get(global_i, global_j);
+                if transparent_pixels[global_i * self.width + global_j] {
                     indices.push(self.transparent_index);
                 } else {
                     indices.push(self.index_map[&cur]);

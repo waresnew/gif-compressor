@@ -3,6 +3,7 @@ use crate::{
     nearest_neighbour::{ChosenNnSolver, NnSolver},
 };
 
+//TODO: use gpu
 pub fn quantize_frames(
     frames: impl Iterator<Item = GifFrame>,
     palette: Vec<Rgb>,

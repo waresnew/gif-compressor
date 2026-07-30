@@ -2,12 +2,10 @@ use std::hash::Hash;
 use std::{cmp::Ordering, hash::Hasher};
 
 #[derive(Debug, Clone, Copy, Default)]
-///transparent field is purely a marker; ignored in ord/eq/hash
 pub struct Rgb {
     pub r: u8,
     pub g: u8,
     pub b: u8,
-    pub transparent: bool,
 }
 impl Hash for Rgb {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -38,20 +36,9 @@ impl Ord for Rgb {
         }
     }
 }
-pub const RGB_TRANSPARENT: Rgb = Rgb {
-    r: 0,
-    g: 0,
-    b: 0,
-    transparent: true,
-};
 impl Rgb {
     pub fn new(r: u8, g: u8, b: u8) -> Self {
-        Self {
-            r,
-            g,
-            b,
-            ..Default::default()
-        }
+        Self { r, g, b }
     }
     pub fn get(&self, dim: usize) -> i32 {
         if dim == 0 {
@@ -96,7 +83,7 @@ pub struct Image {
 impl Image {
     pub fn blank(height: usize, width: usize) -> Self {
         Self {
-            buffer: vec![RGB_TRANSPARENT; height * width],
+            buffer: vec![Rgb::default(); height * width],
             height,
             width,
         }

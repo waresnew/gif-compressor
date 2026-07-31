@@ -3,7 +3,7 @@ use std::sync::mpsc::channel;
 use bytemuck::{Pod, Zeroable};
 use wgpu::{
     BindGroupDescriptor, BindGroupEntry, BufferDescriptor, BufferUsages, ComputePipelineDescriptor,
-    DeviceDescriptor, Limits, PollType, RequestAdapterOptions,
+    DeviceDescriptor, Limits, PipelineCompilationOptions, PollType, RequestAdapterOptions,
     util::{BufferInitDescriptor, DeviceExt, DownloadBuffer},
 };
 
@@ -68,6 +68,7 @@ async fn run_shader_with_frames_async(
         .await
         .unwrap();
     let adapter_limits = adapter.limits();
+
     let (device, queue) = adapter
         .request_device(&DeviceDescriptor {
             required_limits: Limits {
@@ -178,9 +179,9 @@ async fn run_shader_with_frames_async(
         cpass.set_pipeline(&pipeline);
         cpass.set_bind_group(0, &bind_group, &[]);
         cpass.dispatch_workgroups(
-            num_frames.div_ceil(4) as u32,
-            height.div_ceil(8) as u32,
-            width.div_ceil(8) as u32,
+            width.div_ceil(64) as u32,
+            height.div_ceil(1) as u32,
+            num_frames.div_ceil(1) as u32,
         );
     }
     queue.submit(Some(encoder.finish()));

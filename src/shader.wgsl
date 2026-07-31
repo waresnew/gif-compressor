@@ -6,6 +6,11 @@ struct GlobalInfo {
     width:u32
 };
 
+//WARNING:if changing the value or semantics of workgroup sizes, also update the dispatch_workgroups args
+const WORKGROUP_SIZE_X=64u;
+const WORKGROUP_SIZE_Y=1u;
+const WORKGROUP_SIZE_Z=1u;
+
 @group(0) @binding(0) var<uniform> global_info:GlobalInfo;
 @group(0) @binding(1) var<storage,read> palettes:array<Rgb>;
 @group(0) @binding(2) var<storage,read> palette_offsets:array<u32>;
@@ -13,11 +18,11 @@ struct GlobalInfo {
 @group(0) @binding(4) var<storage,read_write> output_frames:array<Rgb>; //row major
 
 @compute
-@workgroup_size(4,8,8)
+@workgroup_size(WORKGROUP_SIZE_X,WORKGROUP_SIZE_Y,WORKGROUP_SIZE_Z)
 fn nn_in_palette(@builtin(global_invocation_id) global_invocation_id: vec3<u32>) {
-    let frame_index=global_invocation_id.x;
+    let col_index=global_invocation_id.x;
     let row_index=global_invocation_id.y;
-    let col_index=global_invocation_id.z;
+    let frame_index=global_invocation_id.z;
     if frame_index>=global_info.num_frames || row_index>=global_info.height || col_index>=global_info.width {
         return;
     }
@@ -37,11 +42,11 @@ fn nn_in_palette(@builtin(global_invocation_id) global_invocation_id: vec3<u32>)
 }
 
 @compute
-@workgroup_size(4,8,8)
+@workgroup_size(WORKGROUP_SIZE_X,WORKGROUP_SIZE_Y,WORKGROUP_SIZE_Z)
 fn undither_frame(@builtin(global_invocation_id) global_invocation_id: vec3<u32>) {
-    let frame_index=global_invocation_id.x;
+    let col_index=global_invocation_id.x;
     let row_index=global_invocation_id.y;
-    let col_index=global_invocation_id.z;
+    let frame_index=global_invocation_id.z;
     if frame_index>=global_info.num_frames || row_index>=global_info.height || col_index>=global_info.width {
         return;
     }

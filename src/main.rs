@@ -14,7 +14,7 @@ use crate::cli::Cli;
 
 mod cli;
 
-struct GenUnditheredChunksOutput<I: Iterator<Item = Vec<GifFrame>>> {
+struct UnditheredChunks<I: Iterator<Item = Vec<GifFrame>>> {
     first_pass: I,
     second_pass: I,
     height: usize,
@@ -32,12 +32,12 @@ fn main() {
         cli.chunk_size = gpu::get_highest_chunk_size();
         info!("inferring chunk_size = {}", cli.chunk_size);
     }
-    let GenUnditheredChunksOutput {
+    let UnditheredChunks {
         first_pass,
         second_pass,
         height,
         width,
-    } = gen_undithered_frames(cli.input, cli.chunk_size);
+    } = prepare_undithered_chunks(cli.input, cli.chunk_size);
     let palette = palette::gen_palette(first_pass, height, width);
 
     let quantized_frames = second_pass.flat_map(|chunk| quantizer::quantize_chunk(chunk, &palette));
@@ -58,18 +58,17 @@ fn main() {
     );
 }
 
-/// handles the stream option
-fn gen_undithered_frames(
+fn prepare_undithered_chunks(
     input: String,
     chunk_size: usize,
-) -> GenUnditheredChunksOutput<impl Iterator<Item = Vec<GifFrame>>> {
+) -> UnditheredChunks<impl Iterator<Item = Vec<GifFrame>>> {
     let reader1 = GifReader::new(input.clone());
     let reader2 = GifReader::new(input);
     let height = reader1.height();
     let width = reader1.width();
     let undithered_chunks1 = ChunkedIter::new(reader1, chunk_size).map(undither::undither_chunk);
     let undithered_chunks2 = ChunkedIter::new(reader2, chunk_size).map(undither::undither_chunk);
-    GenUnditheredChunksOutput {
+    UnditheredChunks {
         first_pass: undithered_chunks1,
         second_pass: undithered_chunks2,
         height,

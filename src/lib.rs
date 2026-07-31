@@ -1,3 +1,4 @@
+pub mod chunked_file;
 pub mod chunked_iter;
 pub mod gpu;
 pub mod image;

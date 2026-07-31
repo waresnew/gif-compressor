@@ -5,7 +5,7 @@ use log::{info, warn};
 use wgpu::{
     BindGroupDescriptor, BindGroupEntry, BufferDescriptor, BufferUsages, ComputePassDescriptor,
     ComputePassTimestampWrites, ComputePipelineDescriptor, DeviceDescriptor, Features, Limits,
-    PipelineCompilationOptions, PollType, QuerySetDescriptor, RequestAdapterOptions,
+    PollType, QuerySetDescriptor, RequestAdapterOptions,
     util::{BufferInitDescriptor, DeviceExt, DownloadBuffer},
 };
 
@@ -237,7 +237,7 @@ async fn run_shader_with_frames_async(
         let elapsed_ms = (start_end_timestamps[1] - start_end_timestamps[0]) as f64
             * queue.get_timestamp_period() as f64
             / 1_000_000.0;
-        info!("GPU {entry_point} compute took {elapsed_ms:.2} ms");
+        info!("GPU {entry_point} compute took {elapsed_ms:.1} ms");
     }
     let bytes = rx.recv().unwrap();
     bytes

@@ -1,7 +1,9 @@
 use std::hash::Hash;
 use std::{cmp::Ordering, hash::Hasher};
 
-#[derive(Debug, Clone, Copy, Default)]
+use bitcode::{Decode, Encode};
+
+#[derive(Debug, Clone, Copy, Default, Decode, Encode)]
 pub struct Rgb {
     pub r: u8,
     pub g: u8,
@@ -58,7 +60,7 @@ impl Rgb {
         (0.299 * dr * dr + 0.587 * dg * dg + 0.114 * db * db) as u32
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Decode, Encode)]
 pub struct Image {
     pub buffer: Vec<Rgb>,
     pub height: usize,
@@ -80,7 +82,7 @@ impl Image {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Decode, Encode)]
 pub struct GifFrame {
     pub image: Image,
     pub palette: Vec<Rgb>,

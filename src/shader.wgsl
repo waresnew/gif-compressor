@@ -120,6 +120,7 @@ fn index(frame:u32, pixel_i:u32, pixel_j:u32)->u32 {
     return frame*global_info.height*global_info.width+pixel_i*global_info.width+pixel_j;
 }
 
+//PERF:pretty sure this is the bottleneck
 fn nn_in_palette_exclude_2(input:Rgb, exclude1:Rgb,exclude2:Rgb, frame_index:u32)->Rgb {
     var best_dis=1000000u;
     var ans=Rgb(0,0,0);

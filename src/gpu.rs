@@ -257,10 +257,12 @@ async fn run_shader_with_frames_async(
         })
         .collect()
 }
-pub fn get_highest_chunk_size() -> usize {
-    pollster::block_on(get_highest_chunk_size_async())
+pub fn get_highest_chunk_size(height: usize, width: usize) -> usize {
+    let highest_buffer_size = pollster::block_on(get_highest_buffer_size());
+    let frame_size = size_of::<RgbGpu>() * height * width + size_of::<Image>();
+    highest_buffer_size / frame_size
 }
-async fn get_highest_chunk_size_async() -> usize {
+async fn get_highest_buffer_size() -> usize {
     let instance = wgpu::Instance::default();
     let adapter = instance
         .request_adapter(&RequestAdapterOptions::default())

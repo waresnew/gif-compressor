@@ -17,10 +17,13 @@ mod cli;
 struct UnditheredChunks<I: Iterator<Item = Vec<GifFrame>>> {
     first_pass: I,
     second_pass: I,
-    height: usize,
-    width: usize,
 }
 
+/// (height,width)
+fn peek_height_and_width(input: String) -> (usize, usize) {
+    let reader = GifReader::new(input);
+    (reader.height(), reader.width())
+}
 fn main() {
     let start = Instant::now();
     let mut cli = Cli::parse();
@@ -28,15 +31,14 @@ fn main() {
         .filter_level(cli.verbosity.log_level_filter())
         .init();
 
+    let (height, width) = peek_height_and_width(cli.input.clone());
     if cli.chunk_size == 0 {
-        cli.chunk_size = gpu::get_highest_chunk_size();
+        cli.chunk_size = gpu::get_highest_chunk_size(height, width);
         info!("inferring chunk_size = {}", cli.chunk_size);
     }
     let UnditheredChunks {
         first_pass,
         second_pass,
-        height,
-        width,
     } = prepare_undithered_chunks(cli.input, cli.chunk_size);
     let palette = palette::gen_palette(first_pass, height, width);
 
@@ -64,14 +66,10 @@ fn prepare_undithered_chunks(
 ) -> UnditheredChunks<impl Iterator<Item = Vec<GifFrame>>> {
     let reader1 = GifReader::new(input.clone());
     let reader2 = GifReader::new(input);
-    let height = reader1.height();
-    let width = reader1.width();
     let undithered_chunks1 = ChunkedIter::new(reader1, chunk_size).map(undither::undither_chunk);
     let undithered_chunks2 = ChunkedIter::new(reader2, chunk_size).map(undither::undither_chunk);
     UnditheredChunks {
         first_pass: undithered_chunks1,
         second_pass: undithered_chunks2,
-        height,
-        width,
     }
 }

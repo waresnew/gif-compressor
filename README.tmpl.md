@@ -10,7 +10,7 @@ However, dithering greatly harms compression (such as LZW, which GIFs use) due t
 
 ## How it works
 
-A heuristic based on [this project](https://github.com/kornelski/undither) was adapted for GIFs to identify dithering patterns. After all frames are undithered, they are requantized with a newly generated colour palette to produce a valid GIF.
+A heuristic based on [this project](https://github.com/kornelski/undither) was adapted for GIFs to identify dithering patterns. After all frames are undithered, they are requantized with a newly generated colour palette to produce a valid GIF. Compressing by undithering also has the benefit of being readily parallelizable on the GPU.
 
 Below is a zoomed in sample of the dithering removal. It's not a perfect process because error diffusion dithering is lossy.
 |Before (Dithered)|After (Undithered & requantized)|
@@ -24,6 +24,8 @@ Below is a zoomed in sample of the dithering removal. It's not a perfect process
 ## Showcase
 
 {{ gif_bench }}
+
+The runtimes were measured on an M4 Macbook Air. Although this program's compression ratios and execution times are generally better, the undither process leads to colour banding artifacts near gradients, such as skies.
 
 ## Building
 

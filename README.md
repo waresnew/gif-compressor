@@ -12,7 +12,7 @@ However, dithering greatly harms compression (such as LZW, which GIFs use) due t
 
 ## How it works
 
-A heuristic based on [this project](https://github.com/kornelski/undither) was adapted for GIFs to identify dithering patterns. After all frames are undithered, they are requantized with a newly generated colour palette to produce a valid GIF.
+A heuristic based on [this project](https://github.com/kornelski/undither) was adapted for GIFs to identify dithering patterns. After all frames are undithered, they are requantized with a newly generated colour palette to produce a valid GIF. Compressing by undithering also has the benefit of being readily parallelizable on the GPU.
 
 Below is a zoomed in sample of the dithering removal. It's not a perfect process because error diffusion dithering is lossy.
 |Before (Dithered)|After (Undithered & requantized)|
@@ -33,8 +33,8 @@ Options:
           The input file path
   -o, --output <OUTPUT>
           The output file path
-  -s, --stream
-          Instructs the program to not store all GIF frames in memory at once. Leads to reduced peak memory usage at the cost of longer runtime
+  -c, --chunk-size <CHUNK_SIZE>
+          How many frames to send to the GPU at a time. Setting it to 0 will use as much memory as your GPU allows in a storage buffer [default: 0]
   -t, --transparency-threshold <TRANSPARENCY_THRESHOLD>
           Specify a non-negative colour distance threshold for transparency optimization [default: 5]
   -v, --verbose...
@@ -63,32 +63,34 @@ The file size and runtime are compared to [gifsicle](https://github.com/kohler/g
 
 <tr>
 <td width="45%">3.6 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe.gif" width="100%"></td>
-<td width="10%">2.5 MB (-29%) in 2.1s</td>
-<td width="45%">2.1 MB (-40%) in 4.4s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
+<td width="10%">2.5 MB (-29%) in 2.0s</td>
+<td width="45%">2.1 MB (-40%) in 1.6s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/terraria_iframe_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">28.7 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe.gif" width="100%"></td>
-<td width="10%">25.5 MB (-11%) in 21.7s</td>
-<td width="45%">19.5 MB (-32%) in 22.5s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
+<td width="10%">25.5 MB (-11%) in 21.6s</td>
+<td width="45%">19.5 MB (-32%) in 8.6s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/childe_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">78.8 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols.gif" width="100%"></td>
-<td width="10%">37.9 MB (-52%) in 40.9s</td>
-<td width="45%">33.9 MB (-57%) in 44.5s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
+<td width="10%">37.9 MB (-52%) in 40.4s</td>
+<td width="45%">35.0 MB (-56%) in 19.0s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/ninesols_output.gif" width="100%"></td>
 </tr>
                 
 
 <tr>
 <td width="45%">80.3 MB <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl.gif" width="100%"></td>
-<td width="10%">64.1 MB (-20%) in 58.9s</td>
-<td width="45%">47.1 MB (-41%) in 56.5s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
+<td width="10%">64.1 MB (-20%) in 57.9s</td>
+<td width="45%">46.9 MB (-42%) in 20.6s <br><img src="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" alt="https://github.com/waresnew/gif-compressor/releases/download/examples/skywars_pearl_output.gif" width="100%"></td>
 </tr>
                 
 </table>
+
+The runtimes were measured on an M4 Macbook Air. Although this program's compression ratios and execution times are generally better, the undither process leads to colour banding artifacts near gradients, such as skies.
 
 ## Building
 

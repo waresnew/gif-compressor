@@ -1,9 +1,11 @@
 use std::sync::mpsc::channel;
 
 use bytemuck::{Pod, Zeroable};
+use log::{info, warn};
 use wgpu::{
-    BindGroupDescriptor, BindGroupEntry, BufferDescriptor, BufferUsages, ComputePipelineDescriptor,
-    DeviceDescriptor, Limits, PipelineCompilationOptions, PollType, RequestAdapterOptions,
+    BindGroupDescriptor, BindGroupEntry, BufferDescriptor, BufferUsages, ComputePassDescriptor,
+    ComputePassTimestampWrites, ComputePipelineDescriptor, DeviceDescriptor, Features, Limits,
+    PipelineCompilationOptions, PollType, QuerySetDescriptor, RequestAdapterOptions,
     util::{BufferInitDescriptor, DeviceExt, DownloadBuffer},
 };
 
@@ -68,13 +70,21 @@ async fn run_shader_with_frames_async(
         .await
         .unwrap();
     let adapter_limits = adapter.limits();
-
+    let supports_timestamp_queries = adapter.features().contains(Features::TIMESTAMP_QUERY);
+    if !supports_timestamp_queries {
+        warn!("GPU does not support timestamp queries, no GPU timings will be logged");
+    }
     let (device, queue) = adapter
         .request_device(&DeviceDescriptor {
             required_limits: Limits {
                 max_storage_buffer_binding_size: adapter_limits.max_storage_buffer_binding_size,
                 max_buffer_size: adapter_limits.max_buffer_size,
                 ..Default::default()
+            },
+            required_features: if supports_timestamp_queries {
+                Features::TIMESTAMP_QUERY
+            } else {
+                Features::empty()
             },
             ..Default::default()
         })
@@ -147,6 +157,17 @@ async fn run_shader_with_frames_async(
         compilation_options: Default::default(),
         cache: Default::default(),
     });
+    let query_set = device.create_query_set(&QuerySetDescriptor {
+        ty: wgpu::QueryType::Timestamp,
+        count: 2,
+        label: Some("query timestamps"),
+    });
+    let query_buffer = device.create_buffer(&BufferDescriptor {
+        size: 8 * 2,
+        usage: BufferUsages::QUERY_RESOLVE | BufferUsages::COPY_SRC,
+        label: Some("query timestamp buffer"),
+        mapped_at_creation: false,
+    });
     let bind_group = device.create_bind_group(&BindGroupDescriptor {
         label: None,
         layout: &pipeline.get_bind_group_layout(0),
@@ -175,7 +196,18 @@ async fn run_shader_with_frames_async(
     });
     let mut encoder = device.create_command_encoder(&Default::default());
     {
-        let mut cpass = encoder.begin_compute_pass(&Default::default());
+        let mut cpass = encoder.begin_compute_pass(&ComputePassDescriptor {
+            label: None,
+            timestamp_writes: if supports_timestamp_queries {
+                Some(ComputePassTimestampWrites {
+                    query_set: &query_set,
+                    beginning_of_pass_write_index: Some(0),
+                    end_of_pass_write_index: Some(1),
+                })
+            } else {
+                None
+            },
+        });
         cpass.set_pipeline(&pipeline);
         cpass.set_bind_group(0, &bind_group, &[]);
         cpass.dispatch_workgroups(
@@ -184,12 +216,29 @@ async fn run_shader_with_frames_async(
             num_frames.div_ceil(1) as u32,
         );
     }
+    if supports_timestamp_queries {
+        encoder.resolve_query_set(&query_set, 0..2, &query_buffer, 0);
+    }
     queue.submit(Some(encoder.finish()));
     let (tx, rx) = channel();
     DownloadBuffer::read_buffer(&device, &queue, &output_buffer.slice(..), move |result| {
         tx.send(result.unwrap().to_vec()).unwrap()
     });
+    let (timestamp_tx, timestamp_rx) = channel();
+    if supports_timestamp_queries {
+        DownloadBuffer::read_buffer(&device, &queue, &query_buffer.slice(..), move |result| {
+            timestamp_tx.send(result.unwrap().to_vec()).unwrap()
+        });
+    }
     device.poll(PollType::wait_indefinitely()).unwrap();
+    if supports_timestamp_queries {
+        let bytes = timestamp_rx.recv().unwrap();
+        let start_end_timestamps: &[u64] = bytemuck::cast_slice(&bytes);
+        let elapsed_ms = (start_end_timestamps[1] - start_end_timestamps[0]) as f64
+            * queue.get_timestamp_period() as f64
+            / 1_000_000.0;
+        info!("GPU {entry_point} compute took {elapsed_ms:.2} ms");
+    }
     let bytes = rx.recv().unwrap();
     bytes
         .chunks_exact(bytes.len() / num_frames)

@@ -1,4 +1,6 @@
-use std::collections::{BTreeSet, BinaryHeap};
+use std::collections::BinaryHeap;
+
+use indexmap::IndexSet;
 
 use crate::image::{GifFrame, Rgb};
 
@@ -7,7 +9,7 @@ pub fn gen_palette(
     height: usize,
     width: usize,
 ) -> Vec<Rgb> {
-    let mut colour_freq = BTreeSet::default(); //not hashset for into_iter() determinism
+    let mut colour_freq: IndexSet<Rgb> = IndexSet::default(); // for into_iter determinism
     for chunk in chunks {
         for frame in chunk {
             for i in 0..height {

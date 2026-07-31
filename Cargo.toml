@@ -6,12 +6,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ahash = "0.8.12"
 bytemuck = "1.25.2"
 clap = { version = "4.6.4", features = ["derive"] }
 clap-verbosity-flag = "3.0.4"
 env_logger = "0.11.11"
 gif = "0.14.1"
+indexmap = "2.14.0"
 log = "0.4.33"
 pollster = "1.0.1"
 wgpu = "30.0.0"
@@ -19,7 +19,3 @@ wgpu = "30.0.0"
 [dev-dependencies]
 criterion = "0.8.2"
 rand = "0.10.2"
-
-[[bench]]
-name = "nearest_neighbour"
-harness = false

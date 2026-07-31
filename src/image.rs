@@ -51,27 +51,11 @@ impl Rgb {
             unreachable!("RGB Point get() given dim=={}", dim);
         }
     }
-    pub fn average(&self, other: Rgb) -> Rgb {
-        Rgb::new(
-            ((self.r as u16 + other.r as u16) / 2) as u8,
-            ((self.g as u16 + other.g as u16) / 2) as u8,
-            ((self.b as u16 + other.b as u16) / 2) as u8,
-        )
-    }
-    pub fn distance_sq(&self, other: Rgb) -> u32 {
-        let dr = self.r as i32 - other.r as i32;
-        let dg = self.g as i32 - other.g as i32;
-        let db = self.b as i32 - other.b as i32;
-        (dr * dr + db * db + dg * dg) as u32
-    }
     pub fn distance_luma_sq(&self, other: Rgb) -> u32 {
         let dr = self.r as f32 - other.r as f32;
         let dg = self.g as f32 - other.g as f32;
         let db = self.b as f32 - other.b as f32;
         (0.299 * dr * dr + 0.587 * dg * dg + 0.114 * db * db) as u32
-    }
-    pub fn as_luma(&self) -> u8 {
-        (0.299 * self.r as f32 + 0.587 * self.g as f32 + 0.114 * self.b as f32) as u8
     }
 }
 #[derive(Clone, Debug)]

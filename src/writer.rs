@@ -1,6 +1,5 @@
-use std::{borrow::Cow, fs::File};
+use std::{borrow::Cow, collections::HashMap, fs::File};
 
-use ahash::AHashMap;
 use gif::{DisposalMethod, Encoder, Frame};
 
 use crate::{image::Rgb, transparency::TransparencyOutput};
@@ -9,7 +8,7 @@ pub struct GifWriter<'a, I: Iterator<Item = TransparencyOutput>> {
     encoder: Encoder<&'a mut File>,
     transparency_output: I,
     transparent_index: u8,
-    index_map: AHashMap<Rgb, u8>,
+    index_map: HashMap<Rgb, u8>,
     width: usize,
     height: usize,
 }
@@ -31,7 +30,7 @@ impl<'a, I: Iterator<Item = TransparencyOutput>> GifWriter<'a, I> {
         encoder.set_repeat(gif::Repeat::Infinite).unwrap();
         assert!(palette.len() <= 255);
         let transparent_index = palette.len() as u8;
-        let mut index_map = AHashMap::default();
+        let mut index_map = HashMap::default();
         palette.iter().enumerate().for_each(|(i, x)| {
             index_map.insert(*x, i as u8);
         });
